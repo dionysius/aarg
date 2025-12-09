@@ -1,0 +1,127 @@
+# Global aarg configuration
+
+# Directory structure
+directories:
+  # Directory containing repository configuration files (*.yaml) (Default: "repos.d")
+  # Relative paths are resolved relative to the config file directory
+  # repositories: repos.d
+
+  # Package storage directories
+  # Base directory for all package dirs below
+  root: /var/lib/aarg
+  # Relative paths are resolved relative to 'root' directory (Default: {root}/downloads, {root}/trusted, {root}/staging, {root}/public)
+  # Currently they must be on the same filesystem since packages are hard-linked between these dirs
+  # downloads: downloads
+  # trusted: trusted
+  # staging: staging  # Contains timestamped build directories for atomic deployment
+  # public: public    # Symlink to current staging build
+
+# HTTP client configuration (optional)
+# All options use Go's defaults unless explicitly set
+# http:
+  # Custom User-Agent header (Default: Go-http-client/2.0)
+  # user_agent: "aarg/1.0"
+
+  # Request timeout in seconds (Default: 60, set 0 for no timeout)
+  # timeout: 60
+
+  # Maximum idle connections across all hosts (Default: 100)
+  # max_idle_conns: 100
+
+  # Maximum connections per host (Default: 0, meaning unlimited)
+  # max_conns_per_host: 10
+
+# GPG signing (applies to all repositories)
+signing:
+  private_key: /etc/aarg/keys/signing-private.asc
+  public_key: /etc/aarg/keys/signing-public.asc
+  # Optional passphrase for the private key
+  # If not provided, the key must be unencrypted or signing will fail
+  # passphrase: "your-secret-passphrase"
+
+# GitHub API configuration (optional)
+# Use this to avoid rate limiting (60 requests/hour for unauthenticated)
+# You can also set GITHUB_TOKEN environment variable instead
+github:
+  # Personal access token with 'public_repo' scope
+  # Generate at: https://github.com/settings/tokens
+  # token: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Cloudflare Pages deployment configuration (optional)
+cloudflare:
+  # Cloudflare API token with Pages:Edit permissions
+  # Generate at: https://dash.cloudflare.com/profile/api-tokens
+  # api_token: "X_PjZecx0AGsGB_mCRplB7i9MMd-ypsMypw_7_I_"
+
+  # Cloudflare account ID (found in dashboard URL)
+  # account_id: "093ef56a14b8b3a06d8bb9e07110d784"
+
+  # Pages project name
+  # project_name: "apt-github"
+
+  # Deployment cleanup settings (optional)
+  # Cleanup is automatically enabled when older_than_days or keep_last is set
+  cleanup:
+    # Delete deployments older than this many days (0 = disabled)
+    older_than_days: 30
+
+    # Keep only the last N deployments (0 = disabled)
+    # keep_last: 10 # keeps only the 10 most recent deployments
+
+    # Note: Both criteria can be combined - deployments matching either condition will be deleted
+
+# Deployment URL (base URL where repository is accessible)
+# used for generating scripts with correct urls
+url: "https://apt.example.com" # if in subfolder add the path too, e.g., https://apt.example.com/ubuntu
+
+# Repository generation configuration
+generate:
+  # Pool mode controls how the apt pool is constructed (default: "hierarchical")
+  # If "hierarchical" the pool files are organized the standard way as "pool/component/first-letter/source-name"
+  # If "redirect" the pool files are optimized for HTTP redirect usage as "pool/feed-type/feed-name/feed-specific-structure/source-name"
+  # - A CDN can directly map requests to the pool files without needing to rewrite paths
+  # - Apt doesn't need to compose the package files into pool/ but needs to apply this structure in the Packages and Sources index
+  pool_mode: "redirect"
+  
+  # Number of staging builds to keep for rollback (default: 5)
+  # Older builds are automatically deleted after successful generation
+  # keep_last: 5
+  
+  # List of composers to run during generation (order doesn't matter, they depend on each other as needed)
+  # Valid composers: "apt", "web"
+  # Default: ["apt"]
+  compose:
+    - apt
+    - web
+
+# Web composer configuration (optional)
+web:
+  # Tailwind CSS configuration (optional)
+  tailwind:
+    # Pin to a specific Tailwind CSS release version (Default: latest)
+    # Format: GitHub release tag (e.g., "v4.0.0", "v4.1.0")
+    # Leave empty or omit to automatically use the latest release
+    # release: "v4.0.0"
+
+  # Custom icon URLs for feed types (optional)
+  # Defaults are provided for: github, debian, opensuse
+  # icon_urls:
+  #   github: "https://cdn.simpleicons.org/github"
+  #   apt: "https://cdn.simpleicons.org/debian"
+  #   obs: "https://cdn.simpleicons.org/opensuse"
+
+# Worker pool configuration (optional)
+# Controls parallelism for different types of operations
+# If not specified, sensible defaults are used
+workers:
+  # Main worker pool - orchestrates feed operations and APT repository generation
+  # This is some I/O and coordination work, can be significantly higher than CPU count (Default: runtime.NumCPU() * 10)
+  # main: 80
+
+  # Download pool - concurrent HTTP downloads
+  # Network I/O bound - tune based on bandwidth and remote server limits (Default: 20)
+  # download: 20
+
+  # Compression pool - CPU-intensive de-/compression tasks
+  # Probably best set to CPU core count (Default: runtime.NumCPU())
+  # compression: 8

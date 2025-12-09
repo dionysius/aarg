@@ -1,0 +1,136 @@
+Package: vaultwarden
+Priority: optional
+Section: misc
+Installed-Size: 34499
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Architecture: amd64
+Version: 1.34.3-2~noble
+Depends: adduser, coreutils, vaultwarden-web-vault, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libmariadb3 (>= 3.0.0), libpq5, libssl3t64 (>= 3.0.0)
+Suggests: sqlite3 | postgresql | default-mysql-server | virtual-mysql-server
+Filename: pool/main/v/vaultwarden/vaultwarden_1.34.3-2~noble_amd64.deb
+Size: 2156
+MD5sum: 23c2a905766ed5fa0641d7256cec9712
+SHA1: 53c53e0e33118aabe0dabddde5168bc68fbcb073
+SHA256: 4488441ca5fb1841fc0766e309cc4a74c56d6c085560d7ea3f37a897db9d9b35
+SHA512: 5e53fb4f614bf21106fc1e19cccc192fadb72e699acf42f99e18105e81a7c63bbff52e866aa49f5dee426ae91505b1a5d28ad3c9d58915041888239b04eee176
+Description: Unofficial Bitwarden compatible server written in Rust
+ Alternative implementation of the Bitwarden server API written in Rust and
+ compatible with upstream Bitwarden clients*, perfect for self-hosted
+ deployment where running the official resource-heavy service might not be
+ ideal.
+ .
+ This package contains the vaultwarden api server binary
+Homepage: https://github.com/dani-garcia/vaultwarden
+
+Package: vaultwarden
+Priority: optional
+Section: misc
+Installed-Size: 31900
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Architecture: amd64
+Version: 1.33.2-0~noble
+Depends: adduser, coreutils, vaultwarden-web-vault, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libmariadb3 (>= 3.0.0), libpq5, libssl3t64 (>= 3.0.0)
+Suggests: sqlite3 | postgresql | default-mysql-server | virtual-mysql-server
+Filename: pool/main/v/vaultwarden/vaultwarden_1.33.2-0~noble_amd64.deb
+Size: 2156
+MD5sum: 29d62ef50be352b050a6fb9cb848ce0b
+SHA1: c939b4174fd6e1d4213b3d34c4bc22f6cfa70c1e
+SHA256: 28055cfeb2807979457ee78db64bd2a4d36391e2ae41815bec76cb679017728e
+SHA512: a2c4b130d271fe02e16fe4411ee43d3d411a98db3e73061c359e95db55190fec58e97455e93bcb54b4a4a9abe0cae217d7ccb667338cb760b4a0789092678a24
+Description: Unofficial Bitwarden compatible server written in Rust
+ Alternative implementation of the Bitwarden server API written in Rust and
+ compatible with upstream Bitwarden clients*, perfect for self-hosted
+ deployment where running the official resource-heavy service might not be
+ ideal.
+ .
+ This package contains the vaultwarden api server binary
+Homepage: https://github.com/dani-garcia/vaultwarden
+
+Package: vaultwarden
+Priority: optional
+Section: misc
+Installed-Size: 32231
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Architecture: amd64
+Version: 1.32.7-0~noble
+Depends: adduser, coreutils, vaultwarden-web-vault, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libmariadb3 (>= 3.0.0), libpq5, libssl3t64 (>= 3.0.0)
+Suggests: sqlite3 | postgresql | default-mysql-server | virtual-mysql-server
+Filename: pool/main/v/vaultwarden/vaultwarden_1.32.7-0~noble_amd64.deb
+Size: 2160
+MD5sum: 17c7be892b4b544d6c11bdd854d62002
+SHA1: e260a3b318cb496cf3ca3685f71470a3413e5cb5
+SHA256: d77599d59020d47c1bb05a14372475792c38e63dc23a84f28dec3feb78767525
+SHA512: 5c3ce3f965220c004929eaec73f4df4595f001d7c7f748396d441694b2be86750f7ce0037d3fd3822a319d38fff886ffe89b8546abe02045e93fdb5d5d7e17a6
+Description: Unofficial Bitwarden compatible server written in Rust
+ Alternative implementation of the Bitwarden server API written in Rust and
+ compatible with upstream Bitwarden clients*, perfect for self-hosted
+ deployment where running the official resource-heavy service might not be
+ ideal.
+ .
+ This package contains the vaultwarden api server binary
+Homepage: https://github.com/dani-garcia/vaultwarden
+
+Package: vaultwarden
+Priority: optional
+Section: misc
+Installed-Size: 32154
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Architecture: amd64
+Version: 1.32.6-0~noble
+Depends: adduser, coreutils, vaultwarden-web-vault, libc6 (>= 2.39), libgcc-s1 (>= 4.2), libmariadb3 (>= 3.0.0), libpq5, libssl3t64 (>= 3.0.0)
+Suggests: sqlite3 | postgresql | default-mysql-server | virtual-mysql-server
+Filename: pool/main/v/vaultwarden/vaultwarden_1.32.6-0~noble_amd64.deb
+Size: 2156
+MD5sum: 0c31b3a352a0b07929909c0b8986b3e5
+SHA1: 592f1b18a0f85aa3c1e86409aa82031db401081c
+SHA256: e5e4340435f6592d7d83e846a093e02430606b98fe9292dd8990e1c10b85f56a
+SHA512: 3b67a82bff622566d5e33b093dcb0e55ad8967a443922e8b0a0f70726badb82cc02fafab91d9dd1bcf8ae150481c687b3181ad5db682f603b4e0b4b5aaf9b23d
+Description: Unofficial Bitwarden compatible server written in Rust
+ Alternative implementation of the Bitwarden server API written in Rust and
+ compatible with upstream Bitwarden clients*, perfect for self-hosted
+ deployment where running the official resource-heavy service might not be
+ ideal.
+ .
+ This package contains the vaultwarden api server binary
+Homepage: https://github.com/dani-garcia/vaultwarden
+
+Package: vaultwarden-web-vault
+Priority: optional
+Section: web
+Installed-Size: 73222
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Architecture: all
+Version: 2025.8.0.0-1~noble
+Filename: pool/main/v/vaultwarden-web-vault/vaultwarden-web-vault_2025.8.0.0-1~noble_all.deb
+Size: 7888
+MD5sum: c3e7757d689a605320829865eb99f467
+SHA1: 2db46e37497c80bbbc9b3d11216c14cd6da1fcf1
+SHA256: d84b78a6ae99cbfe2e32dacda697eb73f3360c5b8a9b8c46bfda48d0d5bce700
+SHA512: 4d7b1c4694f8781f054aa02d0fa46304eca0f23e1b16cd232ced5d237782918d62330691f6143eea87072d5e375df61c5d0079649b8533f674874a7577376101
+Description: Web vault frontend for vaultwarden server
+ The vaultwarden web vault based on the bitwarden web vault with patches to make
+ it work with vaultwarden.
+ .
+ This package contains the vaultwarden web vault frontend data
+Homepage: https://github.com/vaultwarden/vw_web_builds
+
+Package: vaultwarden-web-vault
+Priority: optional
+Section: web
+Installed-Size: 91568
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Architecture: all
+Version: 2025.7.1.0-1~noble
+Filename: pool/main/v/vaultwarden-web-vault/vaultwarden-web-vault_2025.7.1.0-1~noble_all.deb
+Size: 7992
+MD5sum: 29420a1fad93a680c5d69dc05183934d
+SHA1: e70f498db5bd187a63ac873446e252dbce75ff3d
+SHA256: 95d0d09f3d5893e8c6d6d60f280678894f1db42b58d56798d61c8c8e1e566b0f
+SHA512: 5056b088b22c412f7c8fb07abe5eb6a181e2e58a229300bb8eb9da52bb555d9dceeceef1cbf33f8b53ea7647457058c2f5a533f8950c37f62e019890a25f1d51
+Description: Web vault frontend for vaultwarden server
+ The vaultwarden web vault based on the bitwarden web vault with patches to make
+ it work with vaultwarden.
+ .
+ This package contains the vaultwarden web vault frontend data
+Homepage: https://github.com/vaultwarden/vw_web_builds
+

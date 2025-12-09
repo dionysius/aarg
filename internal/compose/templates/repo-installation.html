@@ -1,0 +1,292 @@
+{{define "repo-installation"}}
+<!-- Installation Instructions -->
+{{if .ComposeOptions.Distributions}}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <!-- Title bar with tabs and signing keys -->
+    <div class="border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between px-6">
+            <div class="flex items-center space-x-8">
+                <h3 class="py-4 text-lg font-semibold text-gray-900 dark:text-white">Installation</h3>
+                <button onclick="switchInstallTab('manual')" id="tab-manual" class="install-tab-button py-4 text-lg font-semibold border-b-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 transition-colors">
+                    Manual
+                </button>
+                <button onclick="switchInstallTab('automatic')" id="tab-automatic" class="install-tab-button py-4 text-lg font-semibold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    Automatic
+                </button>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Signing Key:</span>
+                <a href="../keys/signing-key.asc" download class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    ASCII
+                </a>
+                <a href="../keys/signing-key.gpg" download class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    GPG
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 space-y-6">
+        <!-- Selection Options - Distribution and Package Types on same line (always visible) -->
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <!-- Distribution Selection -->
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Distribution</label>
+                <div id="distro-buttons" class="flex flex-wrap gap-2">
+                    {{range .ComposeOptions.Distributions}}
+                    <button onclick="selectDistro('{{.}}')" data-distro="{{.}}" class="distro-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all">
+                        {{.}}
+                    </button>
+                    {{end}}
+                </div>
+            </div>
+            {{ if or .ComposeOptions.PackageOptions.Debug .ComposeOptions.PackageOptions.Source }}
+            <!-- Package Type Options -->
+            <div class="flex-shrink-0">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Include</label>
+                <div class="flex flex-wrap gap-3">
+                    {{if .ComposeOptions.PackageOptions.Debug}}
+                    <button onclick="toggleOption('debug')" id="option-debug" class="option-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all">
+                        Debug
+                    </button>
+                    {{end}}
+                    {{if .ComposeOptions.PackageOptions.Source}}
+                    <button onclick="toggleOption('source')" id="option-source" class="option-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all">
+                        Source
+                    </button>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+
+        <!-- Separator -->
+        <div class="border-t border-gray-200 dark:border-gray-700"></div>
+
+        <!-- Manual Installation (default visible) -->
+        <div id="install-manual" class="install-content">
+            <div class="space-y-4">
+                <!-- Step 1 -->
+                <div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold mr-2">1</span>
+                        Install the repository signing key
+                    </p>
+                    <div class="relative ml-8">
+                        <pre class="bg-gray-900 dark:bg-gray-950 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono border border-gray-700"><code id="manual-key-command"></code></pre>
+                        <button onclick="copyToClipboard('manual-key-command')" class="absolute top-2 right-2 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shadow-sm">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold mr-2">2</span>
+                        Add the repository configuration
+                    </p>
+                    <div class="relative ml-8">
+                        <pre class="bg-gray-900 dark:bg-gray-950 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono border border-gray-700"><code id="manual-sources-content"></code></pre>
+                        <button onclick="copyToClipboard('manual-sources-content')" class="absolute top-2 right-2 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shadow-sm">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold mr-2">3</span>
+                        Update package lists and install your wished package(s)
+                    </p>
+                    <div class="relative ml-8">
+                        <pre class="bg-gray-900 dark:bg-gray-950 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono border border-gray-700"><code id="manual-update-and-install">sudo apt update
+sudo apt install ...</code></pre>
+                        <button onclick="copyToClipboard('manual-update-and-install')" class="absolute top-2 right-2 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shadow-sm">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automatic Installation (hidden by default) -->
+        <div id="install-automatic" class="install-content hidden">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold mr-2">*</span>
+                If you like to live on the edge:
+            </p>
+            <div class="relative ml-8">
+                <pre class="bg-gray-900 dark:bg-gray-950 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono border border-gray-700"><code id="install-script-command"></code></pre>
+                <button onclick="copyToClipboard('install-script-command')" class="absolute top-2 right-2 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shadow-sm">
+                    Copy
+                </button>
+            </div>
+            <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                If no distribution is selected, the script tries to automatically detect it from your system.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const repoName = "{{.ComposeOptions.Name}}";
+    const baseURL = "{{.BaseURL}}";
+    const keyringName = "{{.KeyringName}}";
+    let selectedDistro = null;
+    let includeDebug = false;
+    let includeSource = false;
+
+    function switchInstallTab(tab) {
+        // Hide all content sections
+        document.querySelectorAll('.install-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // Remove active state from all tab buttons
+        document.querySelectorAll('.install-tab-button').forEach(btn => {
+            btn.classList.remove('border-blue-600', 'dark:border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+            btn.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+        });
+        
+        // Show selected content
+        document.getElementById('install-' + tab).classList.remove('hidden');
+        
+        // Add active state to selected button
+        const activeBtn = document.getElementById('tab-' + tab);
+        activeBtn.classList.add('border-blue-600', 'dark:border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+        activeBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+    }
+
+    function selectDistro(distro) {
+        // Allow unselecting current distribution
+        if (selectedDistro === distro) {
+            selectedDistro = null;
+        } else {
+            selectedDistro = distro;
+        }
+        
+        // Update button states
+        document.querySelectorAll('.distro-btn').forEach(btn => {
+            if (btn.dataset.distro === selectedDistro) {
+                btn.className = 'distro-btn px-4 py-2 rounded-lg border-2 border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium transition-all';
+            } else {
+                btn.className = 'distro-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all';
+            }
+        });
+        
+        updateInstallInstructions();
+    }
+
+    function toggleOption(option) {
+        const btn = document.getElementById('option-' + option);
+        
+        if (option === 'debug') {
+            includeDebug = !includeDebug;
+            if (includeDebug) {
+                btn.classList.remove('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                btn.classList.add('border-blue-600', 'dark:border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+            } else {
+                btn.classList.remove('border-blue-600', 'dark:border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+                btn.classList.add('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            }
+        } else if (option === 'source') {
+            includeSource = !includeSource;
+            if (includeSource) {
+                btn.classList.remove('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                btn.classList.add('border-blue-600', 'dark:border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+            } else {
+                btn.classList.remove('border-blue-600', 'dark:border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+                btn.classList.add('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            }
+        }
+        
+        updateInstallInstructions();
+    }
+
+    function updateInstallInstructions() {
+        // Build components list
+        let components = 'main';
+        if (includeDebug) {
+            components += ' debug';
+        }
+
+        // Build types list
+        let types = 'deb';
+        if (includeSource) {
+            types += ' deb-src';
+        }
+
+        // Automated install script command
+        let scriptCmd = `curl -fsSL ${baseURL}/${repoName}/install.sh | sudo bash`;
+        let scriptArgs = [];
+        if (selectedDistro) scriptArgs.push('--dist', selectedDistro);
+        if (includeDebug) scriptArgs.push('--debug');
+        if (includeSource) scriptArgs.push('--source');
+        
+        if (scriptArgs.length > 0) {
+            scriptCmd += ' -s -- ' + scriptArgs.join(' ');
+        }
+        
+        document.getElementById('install-script-command').textContent = scriptCmd;
+
+        // Manual key installation
+        const keyCmd = `sudo mkdir -p /etc/apt/keyrings
+curl -fsSL ${baseURL}/keys/signing-key.gpg -o /etc/apt/keyrings/${keyringName}.gpg`;
+        document.getElementById('manual-key-command').textContent = keyCmd;
+
+        // Manual sources configuration (new DEB822 format)
+        const suiteValue = selectedDistro || '$VERSION_CODENAME';
+        
+        let sourcesContent = '';
+        if (!selectedDistro) {
+            sourcesContent = `[ -f /etc/os-release ] && . /etc/os-release\n`;
+        }
+        sourcesContent += `sudo tee /etc/apt/sources.list.d/${repoName}.sources > /dev/null <<EOF
+Types: ${types}
+URIs: ${baseURL}/${repoName}
+Suites: ${suiteValue}
+Components: ${components}
+Signed-By: /etc/apt/keyrings/${keyringName}.gpg
+EOF`;
+        document.getElementById('manual-sources-content').textContent = sourcesContent;
+    }
+
+    function copyToClipboard(elementId) {
+        const text = document.getElementById(elementId).textContent;
+        const button = event.target;
+        const originalText = button.textContent;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            // Success: Show "Copied" with green flash
+            button.textContent = 'Copied';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-green-600', 'animate-pulse');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-green-600', 'animate-pulse');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 500);
+        }).catch(() => {
+            // Error: Show "Error" with red flash
+            button.textContent = 'Error';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-red-600', 'animate-pulse');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-red-600', 'animate-pulse');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 500);
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', updateInstallInstructions);
+</script>
+{{end}}
+{{end}}

@@ -1,0 +1,36 @@
+Format: 1.8
+Date: Wed, 17 Sep 2025 09:27:15 +0000
+Source: vaultwarden
+Binary: vaultwarden
+Built-For-Profiles: noudeb
+Architecture: source amd64
+Version: 1.34.3-2~noble
+Distribution: noble
+Urgency: medium
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Changed-By: dionysius (github-actions) <dragon.dionysius+gha@gmail.com>
+Description:
+ vaultwarden - Unofficial Bitwarden compatible server written in Rust
+Changes:
+ vaultwarden (1.34.3-2~noble) noble; urgency=medium
+ .
+   * Release for noble
+Checksums-Sha1:
+ 2b1bfd1f9e3391eba45bc618005f966013e20ebc 2047 vaultwarden_1.34.3-2~noble.dsc
+ 16fde703289b04b2fee6aa96139da777b700ab81 5848 vaultwarden_1.34.3-2~noble.debian.tar.xz
+ bb46227d89bbfe54571f236409533c2109432638 60394822 vaultwarden-dbgsym_1.34.3-2~noble_amd64.ddeb
+ 7c0379a242c988b0dbf7ab5fdd7d53c225b8042a 8829 vaultwarden_1.34.3-2~noble_amd64.buildinfo
+ 32581238bf450cf657b8e4001e365ae29eb23eeb 10034166 vaultwarden_1.34.3-2~noble_amd64.deb
+Checksums-Sha256:
+ b969d46dbf60781bc7358ec16678d8da6c1e05406dc0f5ae3d3260151ffc84f5 2047 vaultwarden_1.34.3-2~noble.dsc
+ 2dfdaa8d91e6bb18f7c1957e6dc0146998cbb2c12b446f8951482306e94ac809 5848 vaultwarden_1.34.3-2~noble.debian.tar.xz
+ b0d4b1a0532e4ab406ae3f9941458bc91128bf8d4a136c964b6672bfde687922 60394822 vaultwarden-dbgsym_1.34.3-2~noble_amd64.ddeb
+ dcdebfc76be5c6ccbdde8d483d67947af7705d123e52c60d69e69a58aa2a5049 8829 vaultwarden_1.34.3-2~noble_amd64.buildinfo
+ a800254c030e78a0cae39dc4a0bc1861e0736754613ac801a178558f1b052226 10034166 vaultwarden_1.34.3-2~noble_amd64.deb
+Files:
+ fe8f6d221e295acaa023adf3eb286b56 2047 misc optional vaultwarden_1.34.3-2~noble.dsc
+ 98b11b8fd088cf5882cb0e6912d3997a 5848 misc optional vaultwarden_1.34.3-2~noble.debian.tar.xz
+ e8cdb84e76e16b13a9404f4d729f1b31 60394822 debug optional vaultwarden-dbgsym_1.34.3-2~noble_amd64.ddeb
+ d003a7164bbdcc168199d1c1bfc6f2f1 8829 misc optional vaultwarden_1.34.3-2~noble_amd64.buildinfo
+ 45d8e6a9f8d89012fcee518133956bc0 10034166 misc optional vaultwarden_1.34.3-2~noble_amd64.deb
+

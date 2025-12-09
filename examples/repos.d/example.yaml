@@ -1,0 +1,100 @@
+# Note filename = repo name (without .yaml)
+
+# Package options
+packages:
+  # Primary package to use for distribution sorting (default: repository name)
+  # primary: "vaultwarden-web-vault"
+  # Whether to include debug packages (default false)
+  debug: true
+  # Whether to include source packages (default false)
+  source: true
+
+# Explicit distributions (empty = auto-discover from feeds)
+# distributions:
+#   - noble
+#   - trixie
+
+# Explicit architectures (empty = auto-discover from feeds)
+# architectures:
+#   - amd64
+#   - arm64
+
+# Retention policies control which package versions to keep (empty = keep all versions)
+# When multiple patterns match a version:
+#   - Patterns with more segments take priority (e.g., *.#.#-* has priority over *.#.*)
+#   - Patterns with equal segments are combined (union of all matching rules)
+retention:
+  # Keep last 5 major versions, with 3 patch versions for each
+  - pattern: "*.#.#-*"
+    amount: [5,3]
+    # Filter packages by their source package name (empty = all, supports shell-style glob patterns, negation via ! prefix)
+    # sources: ["*"]
+
+  # Example: Apply different retention rules per package
+  # Keep last 3 minor versions for most packages, excluding vaultwarden-web-vault
+  # - pattern: "*.#.*-*"
+  #   amount: [3]
+  #   sources: ["*", "!vaultwarden-web-vault"]
+  # vaultwarden-web-vault uses a more granular retention policy
+  # - pattern: "*.#.#-*"
+  #   amount: [5, 3]
+  #   sources: ["vaultwarden-web-vault"]
+
+# Verification keys (applies to all feeds)
+# If no keyring or keys are specified, falls back to system's ~/.gnupg/trustedkeys.gpg
+verification:
+  # keyring: /etc/aarg/keys/custom-keyring.gpg
+  keys:
+    - /etc/aarg/keys/github-dionysius-actions.asc
+    - /etc/aarg/keys/obs-dionysius-vaultwarden.asc
+
+# Package feeds - sources from which packages are aggregated into this repository
+feeds:
+
+  - github: "dionysius/vaultwarden-deb"
+    ### github specific ###
+    # Releases (optional, defaults to [release])
+    # Filter by release types (options: release, pre-release, draft)
+    # releases:
+    #   - release
+    #
+    # Distributions to filter (optional, empty = all discovered)
+    # distributions:
+    #   - noble                   # Download "noble" releases
+    #   - trixie                  # Download "trixie" releases
+    #   - xUbuntu_24.04: noble    # Download "xUbuntu_24.04" releases, map to "noble"
+
+  - apt: "https://download.opensuse.org/repositories/home:/dionysius:/vaultwarden/Debian_13"
+    ### apt specific ###
+    # APT URL must include scheme (http:// or https://), ports are not allowed
+    #
+    # Distributions must explicitly list what to fetch (cannot auto-discover)
+    # distributions:
+    #   - noble                   # Normal repo: fetch "dists/noble/"
+    #   - "/": noble              # Flat repo: fetch root, map to "noble" (must be single entry)
+    #   - trixie: stable          # Fetch "dists/trixie/", map to "stable" in output
+    #
+    # Components (specifies which components to fetch)
+    # If not defined: defaults to ["main"], ignored for flat repos
+    # components:
+    #   - main
+
+  - obs: "home:dionysius:vaultwarden"
+    # OBS wraps APT but appends distribution to URL (e.g., {base_url}/xUbuntu_24.04/)
+    # Each distribution is a flat APT repository
+    # Location uses OBS project identifier format (home:user:project)
+    # This is automatically converted to download URL format when needed
+    #
+    ### obs specific ###
+    # Distributions must explicitly list what to fetch (cannot auto-discover)
+    # distributions:
+    #   - Debian_13: trixie       # Fetch "Debian_13", map to "trixie" in output
+    #   - xUbuntu_24.04: noble    # Fetch "xUbuntu_24.04", map to "noble" in output
+    #
+    # above internally creates APT feeds with flat repo configuration:
+    #   - apt: "download.opensuse.org/repositories/home:/dionysius:/vaultwarden/Debian_13"
+    #     distributions:
+    #       - "/": trixie
+    #   - apt: "download.opensuse.org/repositories/home:/dionysius:/vaultwarden/xUbuntu_24.04"
+    #     distributions:
+    #       - "/": noble

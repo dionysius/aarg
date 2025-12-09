@@ -1,0 +1,31 @@
+{{define "title"}}Repositories{{end}}
+
+{{define "content"}}
+<div class="space-y-6">
+    <div>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Repositories</h2>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Browse available APT repositories
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {{range .Repositories}}
+        <a href="{{.Path}}" class="block rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    <div class="h-10 w-10 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center">
+                        <span class="text-white font-semibold text-lg">{{substr 0 1 .Name | upper}}</span>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                        {{.Name}}
+                    </h3>
+                </div>
+            </div>
+        </a>
+        {{end}}
+    </div>
+</div>
+{{end}}

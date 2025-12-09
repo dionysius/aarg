@@ -1,0 +1,56 @@
+{{define "repo-feeds"}}
+<!-- Feeds Section -->
+{{if .Feeds}}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Feeds</h3>
+        <a href="{{.ComposeOptions.Name}}.yaml" download class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Config
+        </a>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {{range .Feeds}}
+            {{if .URL}}
+            <a href="{{.URL}}" target="_blank" rel="noopener noreferrer" class="flex items-start space-x-3 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                {{if .Icon}}
+                <img src="{{$.AssetsPath}}assets/icons/{{.Icon}}.svg" alt="{{.Type.String}}" class="h-8 w-8 flex-shrink-0">
+                {{end}}
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-900 dark:text-white">{{.Type.String | title}}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{.DisplayPath}}</p>
+                    {{if .Details}}
+                    <div class="mt-2 space-y-1">
+                        {{range .Details}}
+                        <p class="text-xs text-gray-600 dark:text-gray-400">{{.}}</p>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+                <svg class="h-5 w-5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+            {{else}}
+            <div class="flex items-start space-x-3 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                {{if .Icon}}
+                <img src="{{$.AssetsPath}}assets/icons/{{.Icon}}.svg" alt="{{.Type}}" class="h-8 w-8 flex-shrink-0">
+                {{end}}
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-900 dark:text-white">{{.Type | title}}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{.DisplayPath}}</p>
+                    {{if .Details}}
+                    <div class="mt-2 space-y-1">
+                        {{range .Details}}
+                        <p class="text-xs text-gray-600 dark:text-gray-400">{{.}}</p>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+            {{end}}
+        </div>
+    </div>
+</div>
+{{end}}
+{{end}}

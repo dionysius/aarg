@@ -1,0 +1,186 @@
+Package: vaultwarden
+Binary: vaultwarden
+Version: 1.34.3-2~noble
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Build-Depends: debhelper-compat (= 13), libmariadb-dev-compat, libpq-dev, libsqlite3-dev, libssl-dev, pkg-config, rustup | cargo, zlib1g-dev
+Architecture: any
+Standards-Version: 4.6.1
+Format: 3.0 (quilt)
+Directory: pool/main/v/vaultwarden
+Files:
+ 98b11b8fd088cf5882cb0e6912d3997a 5848 vaultwarden_1.34.3-2~noble.debian.tar.xz
+ 0a853d506a717b48b4d730fdd1e72a6c 1114 vaultwarden_1.34.3-2~noble.dsc
+ e0a511d5b543cdbc63e17ca5e9735ba6 4405 vaultwarden_1.34.3.orig.tar.gz
+Checksums-Sha1:
+ 16fde703289b04b2fee6aa96139da777b700ab81 5848 vaultwarden_1.34.3-2~noble.debian.tar.xz
+ c1cfa1bcc30c2c77fb0b854ab5490ce39781fd37 1114 vaultwarden_1.34.3-2~noble.dsc
+ ce9a23a5ba7ef080b6ebdebb084ac4d724a61c15 4405 vaultwarden_1.34.3.orig.tar.gz
+Checksums-Sha256:
+ 2dfdaa8d91e6bb18f7c1957e6dc0146998cbb2c12b446f8951482306e94ac809 5848 vaultwarden_1.34.3-2~noble.debian.tar.xz
+ 46c2d5732673a3cdc715a8c6de37afe46c850d8ee4e1aa7711cb5fe0d82f765b 1114 vaultwarden_1.34.3-2~noble.dsc
+ 6bb4d1a3613dba234918e658c206113e8907576dd0fee9b5c04d599497e78038 4405 vaultwarden_1.34.3.orig.tar.gz
+Checksums-Sha512:
+ 287cbe8018ac43c7f748af025e7226373e44398148f6bd474ff2be8c1f76721a3afe1b1e5bffef82821c99212d55a9f1c769e3e479c99024d644ab748cf371ee 5848 vaultwarden_1.34.3-2~noble.debian.tar.xz
+ 2806828c191d3eada660113114db9d41c50e45b2b6db4dc2d0e4bab95ca176b696be93775e4f552844c1423493ff086953fc68916bd316251ca59d04382cbbdb 1114 vaultwarden_1.34.3-2~noble.dsc
+ f06a15447639ffaba81b7029fb58fad95fc55b12be3dae9afac3abf47c825e0323dfcd64ba01b1d6e50404300eb5ee41e97c02ebaf404ed289224eadd21d38a0 4405 vaultwarden_1.34.3.orig.tar.gz
+Homepage: https://github.com/dani-garcia/vaultwarden
+Package-List:
+ vaultwarden deb misc optional arch=any
+Vcs-Browser: https://github.com/dionysius/vaultwarden-deb
+Vcs-Git: https://github.com/dionysius/vaultwarden-deb.git
+
+Package: vaultwarden
+Binary: vaultwarden
+Version: 1.33.2-0~noble
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Build-Depends: debhelper-compat (= 13), libmariadb-dev-compat, libpq-dev, libsqlite3-dev, libssl-dev, pkg-config, rustup | cargo, zlib1g-dev
+Architecture: any
+Standards-Version: 4.6.1
+Format: 3.0 (quilt)
+Directory: pool/main/v/vaultwarden
+Files:
+ 7b3733bd99ae1bab97de2da5dbf96d17 5752 vaultwarden_1.33.2-0~noble.debian.tar.xz
+ 79e2f490e575eba02a76766392eb4375 1114 vaultwarden_1.33.2-0~noble.dsc
+ acee4a69405c8a1713a90719563181f6 4404 vaultwarden_1.33.2.orig.tar.gz
+Checksums-Sha1:
+ d08a2961b760f471ae015e3d056079cd1de82527 5752 vaultwarden_1.33.2-0~noble.debian.tar.xz
+ 2383ee384a95ecbab8c124f780c843fc459d106f 1114 vaultwarden_1.33.2-0~noble.dsc
+ 20b047d856ee63ddf2e1a739ab94465b73ed8781 4404 vaultwarden_1.33.2.orig.tar.gz
+Checksums-Sha256:
+ cef9e1f2fe9ec4bb88934b84872b2f453ddfb5c2b19f28c976caea0cb5354908 5752 vaultwarden_1.33.2-0~noble.debian.tar.xz
+ 54ce40d7cb9bf0f4a03c60f27997ef76a8630badb5089bfe7d9f3a21f5b2c4fb 1114 vaultwarden_1.33.2-0~noble.dsc
+ 207a2d6f8048c049ab5140bc2e552235945db2e81fe0e7e32ff36c45a292f496 4404 vaultwarden_1.33.2.orig.tar.gz
+Checksums-Sha512:
+ bbcbcbf1cef7a7d220fbfe3a810abdb72414e684c8015c93dd7faa92c53d0d991c5184ed2f126bff51b8b9a50c236fb11858732ced91c9ca2d160e10219b8fbf 5752 vaultwarden_1.33.2-0~noble.debian.tar.xz
+ 09a0c9619a7aaa8a963b2cbcc9b51492ca862d25be2d39b805bd045dbcb529fe1630894e3fa9d01b0c66d3bb3e4d8171a99685954bc6ca5e691f6589f54c6213 1114 vaultwarden_1.33.2-0~noble.dsc
+ 2837ab5e266c19e25be9f1bc011afd8ef0b068d3cb52a306540566abb4f063b95cca8016900173e5ac611c0282ddd8661a5db72aceebbd513152a736e34f85ee 4404 vaultwarden_1.33.2.orig.tar.gz
+Homepage: https://github.com/dani-garcia/vaultwarden
+Package-List:
+ vaultwarden deb misc optional arch=any
+Vcs-Browser: https://github.com/dionysius/vaultwarden-deb
+Vcs-Git: https://github.com/dionysius/vaultwarden-deb.git
+
+Package: vaultwarden
+Binary: vaultwarden
+Version: 1.32.7-0~noble
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Build-Depends: rustup | cargo, debhelper-compat (= 13), libmariadb-dev-compat, libpq-dev, libsqlite3-dev, libssl-dev, pkg-config, zlib1g-dev
+Architecture: any
+Standards-Version: 4.6.1
+Format: 3.0 (quilt)
+Directory: pool/main/v/vaultwarden
+Files:
+ b21629a5d5557c22cb3c8544c801b946 5728 vaultwarden_1.32.7-0~noble.debian.tar.xz
+ 1b5a94c1a39cf910a394db0eeaad8870 1114 vaultwarden_1.32.7-0~noble.dsc
+ 9d3479417cb832f82ff4be6e22d2467f 4326 vaultwarden_1.32.7.orig.tar.gz
+Checksums-Sha1:
+ 4a71190b26630369bb9763867174ae1a026ed683 5728 vaultwarden_1.32.7-0~noble.debian.tar.xz
+ 387cc4bad594fdb8dcea5f5746c611773314d0aa 1114 vaultwarden_1.32.7-0~noble.dsc
+ bbb1d60caca870b21cd86a006c83ad222a090633 4326 vaultwarden_1.32.7.orig.tar.gz
+Checksums-Sha256:
+ afaf4bcbc3918b7015479efdb8ac7dbf5e615d9f136e6b32ac550c3056239c16 5728 vaultwarden_1.32.7-0~noble.debian.tar.xz
+ 25872c7934ab4d2ad7280933f5d2802f5ee2a38e4a59831e2bf8b28b5f5bd571 1114 vaultwarden_1.32.7-0~noble.dsc
+ fcf96eab94637a1d69f7c4cf4edb4df9eece0553e7fa50bdf277142dc165830a 4326 vaultwarden_1.32.7.orig.tar.gz
+Checksums-Sha512:
+ 821fb76fc8ac60466e8b4b6bdeb7afc3e992d28f70d6cd2f985d8f3853103d53d44e5b45825b72d5f1bf382fda2abd09a16ad3bcf904eaa73469b3157934fdf8 5728 vaultwarden_1.32.7-0~noble.debian.tar.xz
+ 067ea16e5ff24f80454e9939a0f78bad2d3890daa4f809a817862f525566c3e495ff8e430a2c5d3831d6e32b545c4cfc5f7aaade531ecc82f17e2d9fa90f8469 1114 vaultwarden_1.32.7-0~noble.dsc
+ d92b5483cecfc116ca14add67804ed43248652517fc0aa076963e87c02d54f6a8956c0264130587a808948fbf3024610577ca0568736be433bc61f843593dee8 4326 vaultwarden_1.32.7.orig.tar.gz
+Homepage: https://github.com/dani-garcia/vaultwarden
+Package-List:
+ vaultwarden deb misc optional arch=any
+Vcs-Browser: https://github.com/dionysius/vaultwarden-deb
+Vcs-Git: https://github.com/dionysius/vaultwarden-deb.git
+
+Package: vaultwarden
+Binary: vaultwarden
+Version: 1.32.6-0~noble
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Build-Depends: rustup | cargo, debhelper-compat (= 13), libmariadb-dev-compat, libpq-dev, libsqlite3-dev, libssl-dev, pkg-config, zlib1g-dev
+Architecture: any
+Standards-Version: 4.6.1
+Format: 3.0 (quilt)
+Directory: pool/main/v/vaultwarden
+Files:
+ 5fde2262f031cdaec6efa9a972c884e5 5724 vaultwarden_1.32.6-0~noble.debian.tar.xz
+ 6a96af3ee678735028a5bc91b7e515f7 1114 vaultwarden_1.32.6-0~noble.dsc
+ 330b8f7e3d1ac3e18a36c1105e2f73fd 4325 vaultwarden_1.32.6.orig.tar.gz
+Checksums-Sha1:
+ bff12407dd66cdc27e5a73506f35c6c08364849d 5724 vaultwarden_1.32.6-0~noble.debian.tar.xz
+ 235030d7745e903272c73dada96f2fbd3e0abcca 1114 vaultwarden_1.32.6-0~noble.dsc
+ e61ac0ff954442c311399d46f82e149b65e9e60e 4325 vaultwarden_1.32.6.orig.tar.gz
+Checksums-Sha256:
+ ffdcdd1017ceac19150e7443eb49a27543f1f2de109cf736f75e9c10049683c6 5724 vaultwarden_1.32.6-0~noble.debian.tar.xz
+ 2eee6a253362ff2b28f96c9efcad6bd4e79361e76e23e3873e5e15fecd5a3b9d 1114 vaultwarden_1.32.6-0~noble.dsc
+ b225923eae04467d2af4ce15fdf2a3db5f6660eba9cca8fd2ba66ff4e91b6c73 4325 vaultwarden_1.32.6.orig.tar.gz
+Checksums-Sha512:
+ 83f5cc2e203397e04f4b611ab9d7b260ce1b3c23af51f2e73d17b3ece0c6ce5b4c6db5f3fd432934d20836696a65615ffa25e3e61190a0e45c18a8de912e93a5 5724 vaultwarden_1.32.6-0~noble.debian.tar.xz
+ 3a26cbd065fdd8b5d8987af21a4a628e3798ceb444985cf7b455a75e12532394fae7d42da8df1a1c3018a0e64d928506abb3ff3ee55d1b80613f65f44257d997 1114 vaultwarden_1.32.6-0~noble.dsc
+ cf10ca63247f1f39cca6a96fd2b377600694f0e755957a905d382c94ca3a31a0842f4b21b1e5dcc2622c3445e83ea98fa0749f9babd07b6242f15e11e51b8c1e 4325 vaultwarden_1.32.6.orig.tar.gz
+Homepage: https://github.com/dani-garcia/vaultwarden
+Package-List:
+ vaultwarden deb misc optional arch=any
+Vcs-Browser: https://github.com/dionysius/vaultwarden-deb
+Vcs-Git: https://github.com/dionysius/vaultwarden-deb.git
+
+Package: vaultwarden-web-vault
+Binary: vaultwarden-web-vault
+Version: 2025.8.0.0-1~noble
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Build-Depends: debhelper-compat (= 13), npm
+Architecture: all
+Standards-Version: 4.6.1
+Format: 3.0 (quilt)
+Directory: pool/main/v/vaultwarden-web-vault
+Files:
+ 02e6687069695473278ea08ba0ffbcad 4180 vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ 5459d18ad8d82ed69c7e02efd4a1fd01 1159 vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ bf18d5ccc0ed99e3fd8618efc41ee08c 15411 vaultwarden-web-vault_2025.8.0.0.orig.tar.gz
+Checksums-Sha1:
+ e8a8c73ac19322ac538a2532aa10729c1b735391 4180 vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ f2812bc8400b93d49406f2aac3d41e2b2570a490 1159 vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ ef36c32d1ce41e2c763eefd493298868c0c827f7 15411 vaultwarden-web-vault_2025.8.0.0.orig.tar.gz
+Checksums-Sha256:
+ a24ed9a16b17be3ef3a6e53ca3e6b8e2db0fbdf118d1ca570323b5fe8332e796 4180 vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ 4b57da7d374469b9fec1a6989a6a8e4ad7d1cf1380a984a22c1b74991629d670 1159 vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ d73a599556b0c550f2dbf27a77e72ce60b99e51385fc9d81179ace7ad6b75a34 15411 vaultwarden-web-vault_2025.8.0.0.orig.tar.gz
+Checksums-Sha512:
+ a0185a3da3658a3dc20f211c38e9099082a2ded2c25fbf0409f74dc16ca744dffc39fff4f4a5d6d61af6317f65e3f9fecbc695cd4123743e60f6d211ea0473ff 4180 vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ 86727ee242ddcf20858a58ec9a8a0e339623cd922efc3ff6256eaf42143172fe5e9b126ec499c4c8fa47e8386a6d4cef6dcc21ab9f45317e437ad809dcaafb22 1159 vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ 79a1daddac1af87937063161615121d19918d403a144dab84baaf4f061190710d4d93bf7f936dcde459421dcf5b4c11782ff784417c3b524a3af56fb055ec4dc 15411 vaultwarden-web-vault_2025.8.0.0.orig.tar.gz
+Homepage: https://github.com/vaultwarden/vw_web_builds
+Package-List:
+ vaultwarden-web-vault deb web optional arch=all
+Vcs-Browser: https://github.com/dionysius/vaultwarden-web-vault-deb
+Vcs-Git: https://github.com/dionysius/vaultwarden-web-vault-deb.git
+
+Package: vaultwarden-web-vault
+Binary: vaultwarden-web-vault
+Version: 2025.7.1.0-1~noble
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Build-Depends: debhelper-compat (= 13), npm
+Architecture: all
+Standards-Version: 4.6.1
+Format: 3.0 (quilt)
+Directory: pool/main/v/vaultwarden-web-vault
+Files:
+ 1a4e1a2de0857888461d167cbf2faf88 4168 vaultwarden-web-vault_2025.7.1.0-1~noble.debian.tar.xz
+ c1e3f3fb96222be6803b824b4019ba14 1159 vaultwarden-web-vault_2025.7.1.0-1~noble.dsc
+ 1e2b0906c87aad9ed62bc97c3110d3b9 18262 vaultwarden-web-vault_2025.7.1.0.orig.tar.gz
+Checksums-Sha1:
+ c1cf94499549a027ae72e416eb64419c1c187b9d 4168 vaultwarden-web-vault_2025.7.1.0-1~noble.debian.tar.xz
+ 728ca48624553cee4f244b3181d0d71a0eadb046 1159 vaultwarden-web-vault_2025.7.1.0-1~noble.dsc
+ f275e7cf8f3bbf2635e79765d263eb00c63a08ac 18262 vaultwarden-web-vault_2025.7.1.0.orig.tar.gz
+Checksums-Sha256:
+ 0f4de83a8c7191094495519bcea526de0a1f9ebd449cf44999031578acd4aec2 4168 vaultwarden-web-vault_2025.7.1.0-1~noble.debian.tar.xz
+ 392d68ab304d3ae0b3658066d6a3056774cfd05371fd2e7003f00b9d4a376fcc 1159 vaultwarden-web-vault_2025.7.1.0-1~noble.dsc
+ fd1c2a76677505d8f99fa06c29da3ef5e553517a5f2ea39d8d244acfccf26c00 18262 vaultwarden-web-vault_2025.7.1.0.orig.tar.gz
+Checksums-Sha512:
+ c389cf6795a9c93cf3af65b88c9e35f3d6eff78814428139e15860383943f51725cb46b9fa346612aadd010053980d61fa7e6a1b3448ed0e2b96c01c02b02792 4168 vaultwarden-web-vault_2025.7.1.0-1~noble.debian.tar.xz
+ 0a66066b293b4ace69d0342026224fa8116ce2c8e119de7f6a8cecb64286c1a4074c57e7b7b7cd3629de5258377083c8d52d82819fa780f032a6e026390418f3 1159 vaultwarden-web-vault_2025.7.1.0-1~noble.dsc
+ 8e17fe33fc44f77bd52405e7dbb0831873418704742df9b81b66374dacf11d40be1a6e5958dedcb719b86063ef05b820528372dbe6e0d708359ad6e0bc72fc25 18262 vaultwarden-web-vault_2025.7.1.0.orig.tar.gz
+Homepage: https://github.com/vaultwarden/vw_web_builds
+Package-List:
+ vaultwarden-web-vault deb web optional arch=all
+Vcs-Browser: https://github.com/dionysius/vaultwarden-web-vault-deb
+Vcs-Git: https://github.com/dionysius/vaultwarden-web-vault-deb.git
+

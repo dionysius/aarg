@@ -1,0 +1,33 @@
+Format: 1.8
+Date: Tue, 26 Aug 2025 21:11:37 +0000
+Source: vaultwarden-web-vault
+Binary: vaultwarden-web-vault
+Built-For-Profiles: noudeb
+Architecture: source all
+Version: 2025.8.0.0-1~noble
+Distribution: noble
+Urgency: medium
+Maintainer: dionysius <dragon.dionysius@gmail.com>
+Changed-By: dionysius (github-actions) <dragon.dionysius+gha@gmail.com>
+Description:
+ vaultwarden-web-vault - Web vault frontend for vaultwarden server
+Changes:
+ vaultwarden-web-vault (2025.8.0.0-1~noble) noble; urgency=medium
+ .
+   * Release for noble
+Checksums-Sha1:
+ 3900673f66bf2b358f816cda5187c88fef0dba42 2092 vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ e8a8c73ac19322ac538a2532aa10729c1b735391 4180 vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ 8cab02ec88fb00703632609996ef0e8178de5fd3 11819866 vaultwarden-web-vault_2025.8.0.0-1~noble_all.deb
+ deb8adb159e26a8b423f0c36f0f869310daa8bcb 7808 vaultwarden-web-vault_2025.8.0.0-1~noble_amd64.buildinfo
+Checksums-Sha256:
+ fd18f2908b17a368c807ed092e0fc609f023cc7c74a5b94e296f63233ee113bc 2092 vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ a24ed9a16b17be3ef3a6e53ca3e6b8e2db0fbdf118d1ca570323b5fe8332e796 4180 vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ d51de35e69598b7266bac2ae1f1be3923a362444146ccd17db899bd7b02ad4ab 11819866 vaultwarden-web-vault_2025.8.0.0-1~noble_all.deb
+ c4debd7e3918a16ee2144d1a65901d474c1c795222ecf0dae277b6d967dbbb35 7808 vaultwarden-web-vault_2025.8.0.0-1~noble_amd64.buildinfo
+Files:
+ 3d819835df57860a2553ce18b9b115bc 2092 web optional vaultwarden-web-vault_2025.8.0.0-1~noble.dsc
+ 02e6687069695473278ea08ba0ffbcad 4180 web optional vaultwarden-web-vault_2025.8.0.0-1~noble.debian.tar.xz
+ 1e57a3f6daca3cb301dfddc35c5280cf 11819866 web optional vaultwarden-web-vault_2025.8.0.0-1~noble_all.deb
+ 6eb69a725e0b8026a274752dfd082b5e 7808 web optional vaultwarden-web-vault_2025.8.0.0-1~noble_amd64.buildinfo
+

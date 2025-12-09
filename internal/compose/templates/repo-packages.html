@@ -1,0 +1,134 @@
+{{define "repo-packages"}}
+<!-- Package Matrix -->
+{{if .Tables}}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div class="border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center space-x-8 px-6">
+            <h3 class="py-4 text-lg font-semibold text-gray-900 dark:text-white">Latest</h3>
+            <button onclick="switchPackageTab('packages')" id="tab-packages" class="tab-button py-4 text-lg font-semibold border-b-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 transition-colors">
+                Packages
+            </button>
+            <button onclick="switchPackageTab('debug')" id="tab-debug" class="tab-button py-4 text-lg font-semibold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                Debug
+            </button>
+            <button onclick="switchPackageTab('sources')" id="tab-sources" class="tab-button py-4 text-lg font-semibold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                Sources
+            </button>
+        </div>
+    </div>
+    
+    {{range $idx, $table := .Tables}}
+    {{$isFirst := eq $idx 0}}
+    
+    <!-- Table: {{$table.ID}} -->
+    <div id="{{$table.ID}}" class="package-table-container overflow-x-auto{{if not $isFirst}} hidden{{end}}">
+        {{if $table.IsEmpty}}
+        <div class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+            {{$table.EmptyMessage}}
+        </div>
+        {{else}}
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900">
+                {{if $table.HasArchRow}}
+                {{/* Multi-arch mode: 2 rows - Distribution with dist names, Architecture with arch names */}}
+                <tr>
+                    <th scope="col" class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-900 px-6 pt-2 pb-0.5 text-left font-medium text-gray-500 dark:text-gray-400 tracking-wider border-r border-gray-200 dark:border-gray-700">
+                        Distribution
+                    </th>
+                    {{range $idx := until (len $table.DistHeaders)}}
+                    {{$header := index $table.DistHeaders $idx}}
+                    {{$isLast := eq $idx (sub (len $table.DistHeaders) 1)}}
+                    <th scope="col" colspan="{{$header.Colspan}}" class="px-3 pt-2 pb-0.5 text-center font-medium text-gray-500 dark:text-gray-400 {{if not $isLast}}border-r border-gray-200 dark:border-gray-700{{end}}">
+                        {{$header.Name}}
+                    </th>
+                    {{end}}
+                </tr>
+                <tr>
+                    <th scope="col" class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-900 px-6 pt-0.5 pb-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400 tracking-wider border-r border-gray-200 dark:border-gray-700 pl-12">
+                        Architecture
+                    </th>
+                    {{$archHeaders := $table.ArchHeaders}}
+                    {{$distHeaders := $table.DistHeaders}}
+                    {{$archsPerDist := div (len $archHeaders) (len $distHeaders)}}
+                    {{range $idx := until (len $archHeaders)}}
+                    {{$header := index $archHeaders $idx}}
+                    {{$isLastInDist := eq (mod (add $idx 1) $archsPerDist) 0}}
+                    {{$isLast := eq $idx (sub (len $archHeaders) 1)}}
+                    <th scope="col" class="px-3 pt-0.5 pb-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400 {{if and $isLastInDist (not $isLast)}}border-r border-gray-200 dark:border-gray-700{{end}}">
+                        {{$header.Name}}
+                    </th>
+                    {{end}}
+                </tr>
+                {{else}}
+                {{/* Source mode: 1 row - Distribution title with distribution names */}}
+                <tr>
+                    <th scope="col" class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-900 px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 tracking-wider border-r border-gray-200 dark:border-gray-700">
+                        Distribution
+                    </th>
+                    {{range $idx := until (len $table.DistHeaders)}}
+                    {{$header := index $table.DistHeaders $idx}}
+                    {{$isLast := eq $idx (sub (len $table.DistHeaders) 1)}}
+                    <th scope="col" class="px-3 py-2 text-center font-medium text-gray-500 dark:text-gray-400 {{if not $isLast}}border-r border-gray-200 dark:border-gray-700{{end}}">
+                        {{$header.Name}}
+                    </th>
+                    {{end}}
+                </tr>
+                {{end}}
+            </thead>
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {{range $table.Rows}}
+                {{$row := .}}
+                {{$cellsPerDist := div (len $row.Cells) (len $table.DistHeaders)}}
+                <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700 px-6 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-700">
+                        {{.PackageName}}
+                    </td>
+                    {{range $idx := until (len $row.Cells)}}
+                    {{$cell := index $row.Cells $idx}}
+                    {{$isLastInDist := eq (mod (add $idx 1) $cellsPerDist) 0}}
+                    {{$isLast := eq $idx (sub (len $row.Cells) 1)}}
+                    <td class="px-2 py-2 whitespace-nowrap text-xs text-center {{if and $isLastInDist (not $isLast)}}border-r border-gray-200 dark:border-gray-700{{end}}">
+                        {{if $cell.HasPackage}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{if $cell.IsNewest}}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{{else}}bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200{{end}}" title="{{$cell.Version}}">
+                            {{$cell.ShortVersion}}
+                        </span>
+                        {{else}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium italic bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                            missing
+                        </span>
+                        {{end}}
+                    </td>
+                    {{end}}
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+
+<script>
+function switchPackageTab(tab) {
+    // Hide all tables
+    document.querySelectorAll('.package-table-container').forEach(container => {
+        container.classList.add('hidden');
+    });
+    
+    // Remove active state from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('border-blue-600', 'dark:border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+        btn.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+    });
+    
+    // Show selected table
+    document.getElementById(tab).classList.remove('hidden');
+    
+    // Add active state to selected button
+    const activeBtn = document.getElementById('tab-' + tab);
+    activeBtn.classList.add('border-blue-600', 'dark:border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+    activeBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+}
+</script>
+{{end}}
+{{end}}
