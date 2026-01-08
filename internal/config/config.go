@@ -241,6 +241,10 @@ func (c *Config) defaults() {
 	if c.Workers.Main == 0 {
 		c.Workers.Main = uint(runtime.NumCPU() * 10)
 	}
+	// Enforce minimum of 80 workers to avoid deadlock with subpool nesting
+	if c.Workers.Main < 80 {
+		c.Workers.Main = 80
+	}
 	if c.Workers.Download == 0 {
 		c.Workers.Download = 20
 	}
