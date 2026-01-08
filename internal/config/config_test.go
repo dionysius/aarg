@@ -372,14 +372,6 @@ func TestConfig_defaults(t *testing.T) {
 			},
 		},
 		{
-			name: "applies HTTP timeout default",
-			cfg:  &Config{},
-			checkFn: func(t *testing.T, c *Config) {
-				require.NotNil(t, c.HTTP.Timeout)
-				assert.Equal(t, 60, *c.HTTP.Timeout)
-			},
-		},
-		{
 			name: "applies worker defaults",
 			cfg:  &Config{},
 			checkFn: func(t *testing.T, c *Config) {

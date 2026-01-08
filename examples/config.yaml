@@ -22,13 +22,13 @@ directories:
   # Custom User-Agent header (Default: Go-http-client/2.0)
   # user_agent: "aarg/1.0"
 
-  # Request timeout in seconds (Default: 60, set 0 for no timeout)
+  # Request timeout in seconds (Default: 0, unlimited)
   # timeout: 60
 
   # Maximum idle connections across all hosts (Default: 100)
   # max_idle_conns: 100
 
-  # Maximum connections per host (Default: 0, meaning unlimited)
+  # Maximum connections per host (Default: 0, unlimited)
   # max_conns_per_host: 10
 
 # GPG signing (applies to all repositories)

@@ -96,7 +96,7 @@ func (s *SigningConfig) GetPublicKeyPath(configDir string) string {
 // HTTPConfig contains HTTP client configuration
 type HTTPConfig struct {
 	UserAgent       string `yaml:"user_agent,omitempty"`         // Custom User-Agent header
-	Timeout         *int   `yaml:"timeout"`                      // Request timeout in seconds
+	Timeout         int    `yaml:"timeout"`                      // Request timeout in seconds
 	MaxIdleConns    int    `yaml:"max_idle_conns,omitempty"`     // Maximum idle connections
 	MaxConnsPerHost int    `yaml:"max_conns_per_host,omitempty"` // Maximum connections per host
 }
@@ -215,12 +215,6 @@ func (c *Config) defaults() {
 		if token := os.Getenv("GITHUB_TOKEN"); token != "" {
 			c.GitHub.Token = token
 		}
-	}
-
-	// HTTP defaults
-	if c.HTTP.Timeout == nil {
-		defaultTimeout := 60
-		c.HTTP.Timeout = &defaultTimeout
 	}
 
 	// Directories defaults

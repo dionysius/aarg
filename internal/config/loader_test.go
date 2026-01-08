@@ -133,8 +133,6 @@ signing:
 		// Check defaults were applied
 		assert.Equal(t, "/var/lib/aarg", cfg.Directories.Root)
 		assert.Equal(t, "downloads", cfg.Directories.Downloads)
-		assert.NotNil(t, cfg.HTTP.Timeout)
-		assert.Equal(t, 60, *cfg.HTTP.Timeout)
 		assert.Equal(t, "hierarchical", cfg.Generate.PoolMode)
 	})
 

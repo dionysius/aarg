@@ -79,8 +79,8 @@ func New(ctx context.Context, cfg *config.Config) (*Application, error) {
 	httpClient.Transport = transport
 
 	// Set timeout
-	if *cfg.HTTP.Timeout > 0 {
-		httpClient.Timeout = time.Duration(*cfg.HTTP.Timeout) * time.Second
+	if cfg.HTTP.Timeout > 0 {
+		httpClient.Timeout = time.Duration(cfg.HTTP.Timeout) * time.Second
 	}
 
 	// Initialize decompressor with compression pool
