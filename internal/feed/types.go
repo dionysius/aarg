@@ -159,7 +159,7 @@ func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 	if aux.GitHub != nil {
 		f.Type = FeedTypeGitHub
 		f.Name = *aux.GitHub
-		f.RelativePath = "github/" + *aux.GitHub
+		f.RelativePath = "github.com/" + *aux.GitHub
 
 		f.ProjectURL, err = url.Parse("https://github.com/" + *aux.GitHub)
 		if err != nil {

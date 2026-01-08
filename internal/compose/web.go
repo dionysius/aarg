@@ -261,6 +261,18 @@ func preparePackageTable(repo *debext.Repository, config PackageTableConfig, all
 		return table
 	}
 
+	// Collect all unique architectures across all distributions for consistent columns
+	var allArchs []string
+	if config.ArchitectureMode != "source" {
+		archSet := make(map[string]bool)
+		for _, dist := range config.Distributions {
+			for _, arch := range repo.GetArchitectures(dist, config.Component, false) {
+				archSet[arch] = true
+			}
+		}
+		allArchs = slices.Sorted(maps.Keys(archSet))
+	}
+
 	// Build header columns
 	for _, dist := range config.Distributions {
 		if config.ArchitectureMode == "source" {
@@ -271,13 +283,12 @@ func preparePackageTable(repo *debext.Repository, config PackageTableConfig, all
 			})
 		} else {
 			// Multi-arch mode: distribution header spanning all architectures
-			archs := repo.GetArchitectures(dist, config.Component, false)
 			table.DistHeaders = append(table.DistHeaders, TableHeaderColumn{
 				Name:    dist,
-				Colspan: len(archs),
+				Colspan: len(allArchs),
 			})
-			// Add architecture sub-headers
-			for _, arch := range archs {
+			// Add architecture sub-headers (same for all distributions)
+			for _, arch := range allArchs {
 				table.ArchHeaders = append(table.ArchHeaders, TableHeaderColumn{
 					Name:    arch,
 					Colspan: 1,
@@ -288,7 +299,7 @@ func preparePackageTable(repo *debext.Repository, config PackageTableConfig, all
 
 	// Build rows
 	for _, pkgName := range allPackages {
-		row := buildTableRow(repo, pkgName, config)
+		row := buildTableRow(repo, pkgName, config, allArchs)
 		if len(row.Cells) > 0 && hasAnyPackage(row.Cells) {
 			table.Rows = append(table.Rows, row)
 		}
@@ -316,7 +327,7 @@ func buildTableCell(pkg *deb.Package, newestUpstream string) TableCell {
 }
 
 // buildTableRow builds a complete row for a package across all distributions/architectures
-func buildTableRow(repo *debext.Repository, pkgName string, config PackageTableConfig) TableRow {
+func buildTableRow(repo *debext.Repository, pkgName string, config PackageTableConfig, allArchs []string) TableRow {
 	row := TableRow{PackageName: pkgName}
 	newestUpstream := getNewestUpstreamVersion(repo, pkgName, config.Distributions, config.Component, config.ArchitectureMode)
 
@@ -325,7 +336,8 @@ func buildTableRow(repo *debext.Repository, pkgName string, config PackageTableC
 			pkg := repo.GetLatest(pkgName, dist, debext.SourceArchitecture)
 			row.Cells = append(row.Cells, buildTableCell(pkg, newestUpstream))
 		} else {
-			for _, arch := range repo.GetArchitectures(dist, config.Component, false) {
+			// Use consistent architecture list across all distributions
+			for _, arch := range allArchs {
 				pkg := repo.GetLatest(pkgName, dist, arch)
 				row.Cells = append(row.Cells, buildTableCell(pkg, newestUpstream))
 			}

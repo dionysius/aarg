@@ -75,7 +75,8 @@ func (r *Repository) GetPackageList(distribution, component string) *deb.Package
 }
 
 // GetArchitectures returns all architectures available for a given distribution and component.
-// If includeSource is true, the "source" architecture will be included in the list.
+// If includeSource is true, the "source" architecture will be included in the list even if
+// no source packages exist (to support deb-src in apt sources).
 // Following aptly's pattern, "all" architecture is always excluded from the list.
 // Returns a sorted slice of architecture names.
 func (r *Repository) GetArchitectures(distribution, component string, includeSource bool) []string {
@@ -85,6 +86,14 @@ func (r *Repository) GetArchitectures(distribution, component string, includeSou
 
 	// Use aptly's Architectures method
 	archs := r.packages[distribution][component].Architectures(includeSource)
+
+	// Ensure "source" is included when requested, even if no source packages exist
+	// This allows generating empty Sources indices for deb-src compatibility
+	if includeSource && !slices.Contains(archs, SourceArchitecture) {
+		archs = append(archs, SourceArchitecture)
+		slices.Sort(archs)
+	}
+
 	return archs
 }
 

@@ -803,11 +803,11 @@ func (p *PagesProvider) generateRedirects() ([]byte, error) {
 
 		// GitHub .dsc files redirect to dsc/ subdirectory
 		// .dsc files in dsc/ contain corrected filenames (GitHub normalizes ~ to .)
-		fmt.Fprintf(&buf, "/:aptrepo/pool/github.com/*/*/releases/download/*.dsc /:aptrepo/dsc/github.com/:splat.dsc 301\n")
+		fmt.Fprintf(&buf, "/:aptrepo/pool/github.com/*.dsc /:aptrepo/dsc/github.com/:splat.dsc 301\n")
 
 		// Per-owner redirects for all other files
 		for owner := range githubOwners {
-			fmt.Fprintf(&buf, "/:aptrepo/pool/github.com/%s/:repo/releases/download/* https://github.com/%s/:repo/releases/download/:splat 301\n", owner, owner)
+			fmt.Fprintf(&buf, "/:aptrepo/pool/github.com/%s/:repo/* https://github.com/%s/:repo/releases/download/:splat 301\n", owner, owner)
 		}
 	}
 

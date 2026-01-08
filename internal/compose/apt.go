@@ -174,7 +174,8 @@ func (a *Apt) generatePackageIndex(ctx context.Context, repo *debext.Repository,
 
 	if pkgList == nil && isSource && a.options.PackageOptions.Source {
 		// Special case: create empty Sources index if source packages are enabled
-		if comp != common.DebugComponent {
+		// Debug component typically has no sources, so no warning needed
+		if comp == common.MainComponent {
 			slog.Warn("empty source package list but sources are enabled", "dist", dist, "component", comp)
 		}
 
