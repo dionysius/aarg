@@ -114,9 +114,11 @@ func (m *Storage) LinkFilesToTrusted(ctx context.Context, files []*FileForTrust)
 		redirects[relPath] = file.Redirect
 	}
 
-	// Write redirect map if any redirects were collected
-	if err := m.writeRedirectMap(redirects); err != nil {
-		return err
+	if len(redirects) > 0 {
+		// Write redirect map if any redirects were collected
+		if err := m.writeRedirectMap(redirects); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -153,9 +155,9 @@ func (m *Storage) downloadFileExistsWithHash(hashMethod, expectedHash string, pa
 	exists := fileExistsWithHash(m.GetDownloadPath(pathParts...), hashMethod, expectedHash)
 
 	if exists {
-		slog.Debug("Match exists, download skipped", "file", filepath.Base(m.GetDownloadPath(pathParts...)), "sha256", expectedHash)
+		slog.Debug("Match exists, download skipped", "file", filepath.Join(pathParts...), "sha256", expectedHash)
 	} else {
-		slog.Debug("Doesn't match or exist, downloading", "file", filepath.Base(m.GetDownloadPath(pathParts...)), "sha256", expectedHash)
+		slog.Debug("Doesn't match or exist, downloading", "file", filepath.Join(pathParts...), "sha256", expectedHash)
 	}
 
 	return exists

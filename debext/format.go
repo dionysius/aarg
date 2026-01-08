@@ -362,12 +362,7 @@ func GetSourceNameFromPackage(pkg *deb.Package) string {
 		return pkg.Name
 	}
 
-	// Binary packages: use Source if set, otherwise Name
-	if pkg.Source != "" {
-		return pkg.Source
-	}
-
-	return pkg.Name
+	return pkg.GetField("$Source")
 }
 
 // IsDebugByName determines if a package a debug package by its name.

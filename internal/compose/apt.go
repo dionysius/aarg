@@ -467,6 +467,28 @@ func (a *Apt) processFeedPackageFile(feedOpts *feed.FeedOptions, relPath string,
 		return nil
 	}
 
+	component := common.MainComponent
+
+	// Filter whether source or debug packages are included
+	if pkg.IsSource && !feedOpts.Packages.Source {
+		return nil
+	}
+
+	if debext.IsDebugPackage(pkg) {
+		if !feedOpts.Packages.Debug {
+			return nil
+		}
+
+		component = common.DebugComponent
+	}
+
+	// Filter by architecture if specified
+	if len(feedOpts.Architectures) > 0 {
+		if !slices.Contains(append(feedOpts.Architectures, debext.AllArchitecture), pkg.Architecture) {
+			return nil
+		}
+	}
+
 	// Filter by source name patterns if specified
 	if len(feedOpts.Sources) > 0 {
 		sourceName := debext.GetSourceNameFromPackage(pkg)
@@ -489,12 +511,6 @@ func (a *Apt) processFeedPackageFile(feedOpts *feed.FeedOptions, relPath string,
 				return err
 			}
 		}
-	}
-
-	// Determine component based on package type
-	component := common.MainComponent
-	if debext.IsDebugPackage(pkg) {
-		component = common.DebugComponent
 	}
 
 	// Add to collector with the appropriate component
