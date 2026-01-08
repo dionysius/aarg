@@ -66,14 +66,14 @@ func ParseRelease(inReleaseFile string, verifier *Verifier) (*Release, error) {
 	// Parse Date - try multiple formats for compatibility
 	// RFC 2822/1123 is the spec, but some repositories use other formats
 	dateFormats := []string{
-		"Mon, 2 Jan 2006 15:04:05 MST",     // RFC 1123 with timezone (spec)
-		"Mon, 2 Jan 2006 15:04:05 -0700",   // RFC 1123 with numeric timezone
-		"Mon Jan _2 15:04:05 2006",         // Unix date format (no timezone)
-		"Mon Jan _2 15:04:05 2006 MST",     // Unix date format with timezone
-		time.RFC1123Z,                      // Go stdlib RFC1123 with numeric zone
-		time.RFC1123,                       // Go stdlib RFC1123
+		"Mon, 2 Jan 2006 15:04:05 MST",   // RFC 1123 with timezone (spec)
+		"Mon, 2 Jan 2006 15:04:05 -0700", // RFC 1123 with numeric timezone
+		"Mon Jan _2 15:04:05 2006",       // Unix date format (no timezone)
+		"Mon Jan _2 15:04:05 2006 MST",   // Unix date format with timezone
+		time.RFC1123Z,                    // Go stdlib RFC1123 with numeric zone
+		time.RFC1123,                     // Go stdlib RFC1123
 	}
-	
+
 	var parseErr error
 	for _, format := range dateFormats {
 		config.Date, parseErr = time.Parse(format, stanza["Date"])

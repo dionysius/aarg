@@ -44,10 +44,8 @@ func (f CompressionFormat) Extension() string {
 	return "." + string(f)
 }
 
-// NewDeCompressor creates and initializes a new decompressor with a worker pool
-func NewDeCompressor(ctx context.Context, maxConcurrency int) *DeCompressor {
-	pool := pond.NewResultPool[Result](maxConcurrency, pond.WithContext(ctx), pond.WithoutPanicRecovery())
-
+// NewDeCompressor creates and initializes a new decompressor with the provided worker pool
+func NewDeCompressor(pool pond.ResultPool[Result]) *DeCompressor {
 	return &DeCompressor{
 		pool: pool,
 	}
@@ -153,11 +151,6 @@ func (d *DeCompressor) compressSingle(sourcePath string, format CompressionForma
 
 	result := DeCompressResult(destPath)
 	return &result, nil
-}
-
-// Shutdown gracefully stops the decompressor
-func (d *DeCompressor) Shutdown() {
-	d.pool.StopAndWait()
 }
 
 // Decompress decompresses one or more files in parallel using a task group

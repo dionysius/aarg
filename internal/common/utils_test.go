@@ -207,14 +207,14 @@ func TestEnsureHardlink(t *testing.T) {
 
 		// Try to create hardlink multiple times concurrently
 		done := make(chan error, 3)
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			go func() {
 				done <- EnsureHardlink(src, dst)
 			}()
 		}
 
 		// All should succeed
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			require.NoError(t, <-done)
 		}
 

@@ -15,10 +15,8 @@ import (
 	"github.com/cavaliergopher/grab/v3"
 )
 
-// NewDownloader creates and initializes a new download manager with a worker pool
-func NewDownloader(ctx context.Context, httpClient *http.Client, maxParallel int, decompressor *DeCompressor) *Downloader {
-	pool := pond.NewResultPool[Result](maxParallel, pond.WithContext(ctx), pond.WithoutPanicRecovery())
-
+// NewDownloader creates and initializes a new download manager with the provided worker pool
+func NewDownloader(pool pond.ResultPool[Result], httpClient *http.Client, decompressor *DeCompressor) *Downloader {
 	grabClient := &grab.Client{
 		HTTPClient: httpClient,
 	}
@@ -105,11 +103,6 @@ func (m *Downloader) download(ctx context.Context, req *DownloadRequest) (*Downl
 		DownloadRequest: req,
 		Size:            resp.Size(),
 	}, nil
-}
-
-// Shutdown gracefully stops the download manager
-func (m *Downloader) Shutdown() {
-	m.pool.StopAndWait()
 }
 
 // Download downloads one or more files in parallel using a task group

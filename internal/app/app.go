@@ -23,8 +23,8 @@ import (
 type Application struct {
 	Config             *config.Config
 	MainPool           pond.Pool
-	DownloadPool       pond.Pool
-	CompressionPool    pond.Pool
+	DownloadPool       pond.ResultPool[common.Result]
+	CompressionPool    pond.ResultPool[common.Result]
 	Downloader         *common.Downloader
 	DeCompressor       *common.DeCompressor
 	Storage            *common.Storage
@@ -43,9 +43,9 @@ func New(ctx context.Context, cfg *config.Config) (*Application, error) {
 	dirs := cfg.Directories
 
 	// Create worker pools with context (sizes already validated and defaulted in config)
-	mainPool := pond.NewPool(int(cfg.Workers.Main), pond.WithContext(ctx))
-	downloadPool := pond.NewPool(int(cfg.Workers.Download), pond.WithContext(ctx))
-	compressionPool := pond.NewPool(int(cfg.Workers.Compression), pond.WithContext(ctx))
+	mainPool := pond.NewPool(int(cfg.Workers.Main), pond.WithContext(ctx), pond.WithoutPanicRecovery())
+	downloadPool := pond.NewResultPool[common.Result](int(cfg.Workers.Download), pond.WithContext(ctx), pond.WithoutPanicRecovery())
+	compressionPool := pond.NewResultPool[common.Result](int(cfg.Workers.Compression), pond.WithContext(ctx), pond.WithoutPanicRecovery())
 
 	// Initialize HTTP client with optional configuration
 	httpClient := &http.Client{}
@@ -83,11 +83,11 @@ func New(ctx context.Context, cfg *config.Config) (*Application, error) {
 		httpClient.Timeout = time.Duration(*cfg.HTTP.Timeout) * time.Second
 	}
 
-	// Initialize decompressor
-	decompressor := common.NewDeCompressor(ctx, int(cfg.Workers.Compression))
+	// Initialize decompressor with compression pool
+	decompressor := common.NewDeCompressor(compressionPool)
 
-	// Initialize downloader
-	downloader := common.NewDownloader(ctx, httpClient, int(cfg.Workers.Download), decompressor)
+	// Initialize downloader with download pool
+	downloader := common.NewDownloader(downloadPool, httpClient, decompressor)
 
 	// Initialize storage (using resolved absolute paths from config)
 	storage := common.NewStorage(downloader, dirs.GetDownloadsPath(), dirs.GetTrustedPath())
