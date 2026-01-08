@@ -56,7 +56,11 @@ func (a *Apt) Compose(ctx context.Context) (*debext.Repository, error) {
 	}
 
 	// Process all feeds in parallel
-	group := a.pool.NewGroup()
+	// Create subpool for feed processing
+	feedPool := a.pool.NewSubpool(10)
+	defer feedPool.StopAndWait()
+
+	group := feedPool.NewGroup()
 	for _, feed := range a.options.Feeds {
 		group.SubmitErr(func() error {
 			return a.processFeed(feed)
@@ -77,7 +81,11 @@ func (a *Apt) Compose(ctx context.Context) (*debext.Repository, error) {
 
 func (a *Apt) generateRepository(ctx context.Context, repository *debext.Repository) error {
 	// Parallelize distribution generation
-	group := a.pool.NewGroup()
+	// Create subpool for distribution generation
+	distPool := a.pool.NewSubpool(10)
+	defer distPool.StopAndWait()
+
+	group := distPool.NewGroup()
 
 	for _, dist := range repository.GetDistributions() {
 		group.SubmitErr(func() error {
@@ -101,7 +109,11 @@ func (a *Apt) generateDistribution(ctx context.Context, repo *debext.Repository,
 	var allIndexFiles sync.Map
 
 	// Parallelize components since each component has its own PackageList
-	group := a.pool.NewGroup()
+	// Create subpool for component processing
+	compPool := a.pool.NewSubpool(10)
+	defer compPool.StopAndWait()
+
+	group := compPool.NewGroup()
 
 	for _, comp := range comps {
 		group.SubmitErr(func() error {
@@ -403,7 +415,11 @@ func (a *Apt) processFeed(feedOpts *feed.FeedOptions) error {
 	}
 
 	// Process all distributions in parallel
-	group := a.pool.NewGroup()
+	// Create subpool for feed distribution processing
+	feedDistPool := a.pool.NewSubpool(10)
+	defer feedDistPool.StopAndWait()
+
+	group := feedDistPool.NewGroup()
 	for _, distMap := range distsToProcess {
 		group.SubmitErr(func() error {
 			return a.processFeedDist(feedOpts, distMap.Feed, distMap.Target)

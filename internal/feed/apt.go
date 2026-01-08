@@ -39,7 +39,11 @@ func NewApt(storage *common.Storage, verifier *debext.Verifier, options *FeedOpt
 
 // Run executes the complete download and verification process
 func (s *Apt) Run(ctx context.Context) error {
-	group := s.pool.NewGroup()
+	// Create subpool for distribution processing
+	distPool := s.pool.NewSubpool(10)
+	defer distPool.StopAndWait()
+
+	group := distPool.NewGroup()
 
 	// Process each dist
 	for _, distMap := range s.options.Distributions {
@@ -115,7 +119,11 @@ func (s *Apt) processIndices(ctx context.Context, localPath string, release *deb
 	indices := s.findUniqueBaseIndices(release)
 
 	// Process all indices in parallel
-	group := s.pool.NewGroup()
+	// Create subpool for index processing
+	indexPool := s.pool.NewSubpool(10)
+	defer indexPool.StopAndWait()
+
+	group := indexPool.NewGroup()
 	var results [][]*common.FileForTrust
 
 	for _, basePath := range indices {
@@ -231,7 +239,11 @@ func (s *Apt) downloadPackageFiles(ctx context.Context, dist string, packages []
 	}
 
 	// Download all files in parallel using pond group
-	group := s.pool.NewGroup()
+	// Create subpool for package downloads
+	pkgPool := s.pool.NewSubpool(10)
+	defer pkgPool.StopAndWait()
+
+	group := pkgPool.NewGroup()
 	var downloadedFiles []*common.FileForTrust
 
 	for _, pkg := range keptPackages {

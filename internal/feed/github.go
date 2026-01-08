@@ -58,7 +58,11 @@ func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.
 
 // Run executes the complete download and verification process
 func (s *Github) Run(ctx context.Context) error {
-	group := s.pool.NewGroup()
+	// Create subpool for release processing (limit concurrent releases)
+	releasePool := s.pool.NewSubpool(10)
+	defer releasePool.StopAndWait()
+
+	group := releasePool.NewGroup()
 
 	// List all releases
 	opt := &github.ListOptions{PerPage: 100}
@@ -97,7 +101,10 @@ func (s *Github) Run(ctx context.Context) error {
 	}
 
 	// Now process all kept .changes files according to retention policies
-	group = s.pool.NewGroup()
+	changesPool := s.pool.NewSubpool(10)
+	defer changesPool.StopAndWait()
+
+	group = changesPool.NewGroup()
 	keptChanges, err := s.collector.Kept()
 	if err != nil {
 		return err
@@ -117,7 +124,11 @@ type githubChanges struct {
 }
 
 func (s *Github) processRelease(ctx context.Context, release *github.RepositoryRelease) error {
-	group := s.pool.NewGroup()
+	// Create subpool for processing .changes files in this release
+	changesPool := s.pool.NewSubpool(10)
+	defer changesPool.StopAndWait()
+
+	group := changesPool.NewGroup()
 
 	// Find .changes files in this release
 	for _, asset := range release.Assets {

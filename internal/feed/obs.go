@@ -30,7 +30,11 @@ func NewOBS(storage *common.Storage, verifier *debext.Verifier, options *FeedOpt
 // Run executes the complete download and verification process
 // For each distribution, create a flat APT feed instance
 func (s *OBS) Run(ctx context.Context) error {
-	group := s.pool.NewGroup()
+	// Create subpool for OBS distribution processing
+	obsPool := s.pool.NewSubpool(10)
+	defer obsPool.StopAndWait()
+
+	group := obsPool.NewGroup()
 
 	// Expand OBS feed into APT feeds for each distribution
 	aptFeeds := ExpandOBSFeed(s.options)
@@ -43,7 +47,7 @@ func (s *OBS) Run(ctx context.Context) error {
 
 		group.SubmitErr(func() error {
 			// Create and run an APT feed for this distribution
-			aptFeed, err := NewApt(s.storage.Scope(distMap.Feed), s.verifier, opts, s.pool)
+			aptFeed, err := NewApt(s.storage.Scope(distMap.Feed), s.verifier, opts, obsPool)
 			if err != nil {
 				return err
 			}
