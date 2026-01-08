@@ -149,21 +149,21 @@ func getNewestVersionForPackageInDistribution(repo *debext.Repository, packageNa
 	return newest
 }
 
-// stripDistributionSuffix removes the distribution suffix from a version string
-// Strips everything after the first non-alphanumeric character following the debian revision minus sign
-// For example: "2025.12.1.0-1~noble" -> "2025.12.1.0-1", "1.0.0-2.1+deb12u1" -> "1.0.0-2"
+// stripDistributionSuffix attempts to remove the distribution suffix by ignoring everything after the first non-alphanumeric character
 func stripDistributionSuffix(version string) string {
-	// Find the debian revision (after the last dash in upstream version)
-	idx := strings.LastIndex(version, "-")
-	if idx == -1 {
+	parsed := debext.ParseVersion(version)
+
+	// For versions without revision, no suffix to strip
+	if parsed.Revision == "" {
 		return version
 	}
 
-	// Look for the first non-alphanumeric character after the dash
-	for i := idx + 1; i < len(version); i++ {
-		c := version[i]
+	// Look for the first non-alphanumeric character in the revision
+	for i := 0; i < len(parsed.Revision); i++ {
+		c := parsed.Revision[i]
 		if (c < '0' || c > '9') && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') {
-			return version[:i]
+			parsed.Revision = parsed.Revision[:i]
+			return parsed.String()
 		}
 	}
 

@@ -30,6 +30,9 @@ func TestParseVersion(t *testing.T) {
 			assert.Equal(t, tt.epoch, result.Epoch)
 			assert.Equal(t, tt.upstream, result.Upstream)
 			assert.Equal(t, tt.revision, result.Revision)
+
+			// Test that String() reconstructs the original version
+			assert.Equal(t, tt.version, result.String())
 		})
 	}
 }

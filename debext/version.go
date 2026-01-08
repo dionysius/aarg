@@ -34,3 +34,22 @@ func ParseVersion(version string) VersionComponents {
 
 	return result
 }
+
+// String reconstructs the version string from its components
+func (v VersionComponents) String() string {
+	var result strings.Builder
+
+	if v.Epoch != "" {
+		result.WriteString(v.Epoch)
+		result.WriteString(":")
+	}
+
+	result.WriteString(v.Upstream)
+
+	if v.Revision != "" {
+		result.WriteString("-")
+		result.WriteString(v.Revision)
+	}
+
+	return result.String()
+}
