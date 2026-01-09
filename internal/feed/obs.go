@@ -11,19 +11,21 @@ import (
 // OBS handles OpenSUSE Build Service repository downloads
 // OBS repositories are structured as flat APT repositories per distribution
 type OBS struct {
-	options  *FeedOptions
-	verifier *debext.Verifier
-	storage  *common.Storage
-	pool     pond.Pool
+	options    *FeedOptions
+	repository *common.RepositoryOptions
+	verifier   *debext.Verifier
+	storage    *common.Storage
+	pool       pond.Pool
 }
 
 // NewOBS creates a new OBS feed
-func NewOBS(storage *common.Storage, verifier *debext.Verifier, options *FeedOptions, pool pond.Pool) (*OBS, error) {
+func NewOBS(storage *common.Storage, verifier *debext.Verifier, options *FeedOptions, repository *common.RepositoryOptions, pool pond.Pool) (*OBS, error) {
 	return &OBS{
-		options:  options,
-		verifier: verifier,
-		storage:  storage,
-		pool:     pool,
+		options:    options,
+		repository: repository,
+		verifier:   verifier,
+		storage:    storage,
+		pool:       pool,
 	}, nil
 }
 
@@ -47,7 +49,7 @@ func (s *OBS) Run(ctx context.Context) error {
 
 		group.SubmitErr(func() error {
 			// Create and run an APT feed for this distribution
-			aptFeed, err := NewApt(s.storage.Scope(distMap.Feed), s.verifier, opts, obsPool)
+			aptFeed, err := NewApt(s.storage.Scope(distMap.Feed), s.verifier, opts, s.repository, obsPool)
 			if err != nil {
 				return err
 			}
@@ -76,16 +78,14 @@ func ExpandOBSFeed(obsFeed *FeedOptions) []*FeedOptions {
 		name := downloadURL.Host + downloadURL.Path
 
 		aptOptions := &FeedOptions{
-			Name:              name,
-			Type:              FeedTypeAPT,
-			DownloadURL:       downloadURL,
-			ProjectURL:        obsFeed.ProjectURL, // Keep original OBS project URL
-			RelativePath:      relativePath,
-			Distributions:     []DistributionMap{{Feed: "/", Target: distMap.Target}},
-			Architectures:     obsFeed.Architectures,
-			RetentionPolicies: obsFeed.RetentionPolicies,
-			Packages:          obsFeed.Packages,
-			Sources:           obsFeed.Sources,
+			Name:          name,
+			Type:          FeedTypeAPT,
+			DownloadURL:   downloadURL,
+			ProjectURL:    obsFeed.ProjectURL, // Keep original OBS project URL
+			RelativePath:  relativePath,
+			Distributions: []DistributionMap{{Feed: "/", Target: distMap.Target}},
+			FromSources:   obsFeed.FromSources,
+			Packages:      obsFeed.Packages,
 		}
 
 		aptFeeds = append(aptFeeds, aptOptions)

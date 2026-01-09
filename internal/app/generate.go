@@ -121,15 +121,13 @@ func (a *Application) generateRepository(ctx context.Context, repo *config.Repos
 	// Build APT compose options
 	aptOptions := &compose.AptComposeOptions{
 		ComposeOptions: compose.ComposeOptions{
-			Target:         filepath.Join(stagingPath, repo.Name),
-			Name:           repo.Name,
-			PackageOptions: &repo.Packages,
-			Distributions:  repo.Distributions,
-			Feeds:          expandedFeeds,
+			Target: filepath.Join(stagingPath, repo.Name),
+			Name:   repo.Name,
+			Feeds:  expandedFeeds,
 		},
-		Trusted:           a.Config.Directories.GetTrustedPath(),
-		RetentionPolicies: repo.Retention,
-		PoolMode:          a.Config.Generate.PoolMode,
+		Repository: &repo.RepositoryOptions,
+		Trusted:    a.Config.Directories.GetTrustedPath(),
+		PoolMode:   a.Config.Generate.PoolMode,
 	}
 
 	// Create verifier for compose phase - trust files in trusted storage
@@ -195,12 +193,11 @@ func (a *Application) generateRepository(ctx context.Context, repo *config.Repos
 func (a *Application) generateWeb(ctx context.Context, repo *config.RepositoryConfig, repository *debext.Repository, stagingPath string) error {
 	webOptions := &compose.WebComposeOptions{
 		ComposeOptions: compose.ComposeOptions{
-			Target:         stagingPath,
-			Name:           repo.Name,
-			PackageOptions: &repo.Packages,
-			Distributions:  repository.GetDistributions(),
-			Feeds:          repo.Feeds,
+			Target: stagingPath,
+			Name:   repo.Name,
+			Feeds:  repo.Feeds,
 		},
+		Repository:       &repo.RepositoryOptions,
 		BaseURL:          a.Config.URL,
 		Downloads:        a.Config.Directories.GetDownloadsPath(),
 		PrimaryPackage:   repo.Packages.Primary,

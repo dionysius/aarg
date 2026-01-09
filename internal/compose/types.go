@@ -14,12 +14,6 @@ type ComposeOptions struct {
 	// Name is the repository name
 	Name string
 
-	// PackageOptions contains package filtering options (debug, source inclusion)
-	PackageOptions *common.PackageOptions
-
-	// Distributions is the list of distributions
-	Distributions []string
-
 	// Feeds contains feed information
 	Feeds []*feed.FeedOptions
 }
@@ -28,11 +22,11 @@ type ComposeOptions struct {
 type AptComposeOptions struct {
 	ComposeOptions
 
+	// Repository contains the repository configuration
+	Repository *common.RepositoryOptions
+
 	// Trusted is the path to the trusted directory containing verified packages
 	Trusted string
-
-	// RetentionPolicies defines package retention strategies
-	RetentionPolicies []common.RetentionPolicy
 
 	// PoolMode is the pool organization mode: "hierarchical" or "redirect"
 	PoolMode string
@@ -41,6 +35,9 @@ type AptComposeOptions struct {
 // WebComposeOptions contains configuration for web page generation
 type WebComposeOptions struct {
 	ComposeOptions
+
+	// Repository contains the repository configuration
+	Repository *common.RepositoryOptions
 
 	// BaseURL is the base URL where the repository will be served
 	BaseURL string

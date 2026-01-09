@@ -37,15 +37,15 @@ type RetentionRule struct {
 // RetentionPolicy defines retention rules with optional source filtering
 type RetentionPolicy struct {
 	RetentionRule `yaml:",inline"`
-	Sources       []string `yaml:"sources,omitempty"` // Optional: source name patterns (supports glob), empty = applies to all sources
+	FromSources   []string `yaml:"from_sources,omitempty"` // Optional: source name patterns (supports glob), empty = applies to all sources
 }
 
-// FilterBySource returns rules matching sourceName. Empty Sources matches all.
+// FilterBySource returns rules matching sourceName. Empty FromSources matches all.
 // Supports glob patterns (* and ?) with ! prefix for negations (evaluated after positive matches).
 func FilterBySource(policies []RetentionPolicy, sourceName string) []RetentionRule {
 	var rules []RetentionRule
 	for _, policy := range policies {
-		if MatchesGlobPatterns(policy.Sources, sourceName) {
+		if MatchesGlobPatterns(policy.FromSources, sourceName) {
 			rules = append(rules, policy.RetentionRule)
 		}
 	}

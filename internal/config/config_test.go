@@ -6,8 +6,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/dionysius/aarg/internal/common"
-	"github.com/dionysius/aarg/internal/feed"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -416,88 +414,6 @@ func TestConfig_defaults(t *testing.T) {
 	}
 }
 
-func TestRepositoryConfig_defaults(t *testing.T) {
-	tests := []struct {
-		name    string
-		repo    *RepositoryConfig
-		checkFn func(*testing.T, *RepositoryConfig)
-	}{
-		{
-			name: "inherits architectures and retention",
-			repo: &RepositoryConfig{
-				Architectures: []string{"amd64", "arm64"},
-				Retention: []common.RetentionPolicy{
-					{
-						RetentionRule: common.RetentionRule{
-							Pattern: "*.*.*",
-							Amount:  []int{3},
-						},
-					},
-				},
-				Packages: common.PackageOptions{
-					Debug:  true,
-					Source: false,
-				},
-				Feeds: []*feed.FeedOptions{
-					{Type: "github", Name: "owner/repo"},
-				},
-			},
-			checkFn: func(t *testing.T, r *RepositoryConfig) {
-				require.Len(t, r.Feeds, 1)
-				assert.Equal(t, []string{"amd64", "arm64"}, r.Feeds[0].Architectures)
-				assert.Equal(t, r.Retention, r.Feeds[0].RetentionPolicies)
-				assert.Equal(t, r.Packages, r.Feeds[0].Packages)
-			},
-		},
-		{
-			name: "sets default releases for github feeds",
-			repo: &RepositoryConfig{
-				Feeds: []*feed.FeedOptions{
-					{Type: "github", Name: "owner/repo"},
-				},
-			},
-			checkFn: func(t *testing.T, r *RepositoryConfig) {
-				require.Len(t, r.Feeds, 1)
-				assert.Equal(t, []feed.ReleaseType{feed.ReleaseTypeRelease}, r.Feeds[0].Releases)
-			},
-		},
-		{
-			name: "preserves existing releases for github feeds",
-			repo: &RepositoryConfig{
-				Feeds: []*feed.FeedOptions{
-					{
-						Type:     "github",
-						Name:     "owner/repo",
-						Releases: []feed.ReleaseType{feed.ReleaseTypePrerelease, feed.ReleaseTypeRelease},
-					},
-				},
-			},
-			checkFn: func(t *testing.T, r *RepositoryConfig) {
-				require.Len(t, r.Feeds, 1)
-				assert.Equal(t, []feed.ReleaseType{feed.ReleaseTypePrerelease, feed.ReleaseTypeRelease}, r.Feeds[0].Releases)
-			},
-		},
-		{
-			name: "does not set releases for non-github feeds",
-			repo: &RepositoryConfig{
-				Feeds: []*feed.FeedOptions{
-					{Type: "apt", Name: "example.com/debian"},
-				},
-			},
-			checkFn: func(t *testing.T, r *RepositoryConfig) {
-				require.Len(t, r.Feeds, 1)
-				assert.Nil(t, r.Feeds[0].Releases)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.repo.defaults()
-			tt.checkFn(t, tt.repo)
-		})
-	}
-}
 
 func TestLoadRepositories(t *testing.T) {
 	t.Run("returns error when repos dir doesn't exist", func(t *testing.T) {

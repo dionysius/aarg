@@ -39,11 +39,6 @@ func Load(configPath string) (*Config, error) {
 		return nil, err
 	}
 
-	// Apply defaults to each repository
-	for _, repo := range cfg.Repositories {
-		repo.defaults()
-	}
-
 	// Validate configuration
 	if err := validate(&cfg); err != nil {
 		return nil, err

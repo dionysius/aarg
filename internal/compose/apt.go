@@ -37,7 +37,7 @@ type Apt struct {
 func NewApt(options *AptComposeOptions, verifier *debext.Verifier, signer pgp.Signer, decompressor *common.DeCompressor, pool pond.Pool) *Apt {
 	return &Apt{
 		options:      options,
-		collector:    common.NewPackageRetentionCollector(options.RetentionPolicies),
+		collector:    common.NewPackageRetentionCollector(options.Repository.Retention),
 		verifier:     verifier,
 		signer:       signer,
 		decompressor: decompressor,
@@ -101,7 +101,7 @@ func (a *Apt) generateDistribution(ctx context.Context, repo *debext.Repository,
 	comps := []string{common.MainComponent}
 
 	// Include debug component if enabled
-	if a.options.PackageOptions.Debug {
+	if a.options.Repository.Packages.Debug {
 		comps = append(comps, common.DebugComponent)
 	}
 
@@ -117,7 +117,7 @@ func (a *Apt) generateDistribution(ctx context.Context, repo *debext.Repository,
 
 	for _, comp := range comps {
 		group.SubmitErr(func() error {
-			arches := repo.GetArchitectures(dist, comp, a.options.PackageOptions.Source)
+			arches := repo.GetArchitectures(dist, comp, a.options.Repository.Packages.Source)
 
 			// Process architectures sequentially - PackageList is not thread-safe
 			for _, arch := range arches {
@@ -184,7 +184,7 @@ func (a *Apt) generatePackageIndex(ctx context.Context, repo *debext.Repository,
 		return nil, fmt.Errorf("failed to filter packages for architecture %s: %w", arch, err)
 	}
 
-	if pkgList == nil && isSource && a.options.PackageOptions.Source {
+	if pkgList == nil && isSource && a.options.Repository.Packages.Source {
 		// Special case: create empty Sources index if source packages are enabled
 		// Debug component typically has no sources, so no warning needed
 		if comp == common.MainComponent {
@@ -399,7 +399,7 @@ func (a *Apt) processFeed(feedOpts *feed.FeedOptions) error {
 			if entry.IsDir() {
 				distName := entry.Name()
 				// If repository has explicit distributions, filter by them
-				if len(a.options.Distributions) == 0 || slices.Contains(a.options.Distributions, distName) {
+				if len(a.options.Repository.Distributions) == 0 || slices.Contains(a.options.Repository.Distributions, distName) {
 					distsToProcess = append(distsToProcess, feed.DistributionMap{Feed: distName, Target: distName})
 				}
 			}
@@ -408,7 +408,7 @@ func (a *Apt) processFeed(feedOpts *feed.FeedOptions) error {
 		// Feed has explicit distribution mappings
 		for _, distMap := range feedOpts.Distributions {
 			// If repository has explicit distributions, only include mappings that target them
-			if len(a.options.Distributions) == 0 || slices.Contains(a.options.Distributions, distMap.Target) {
+			if len(a.options.Repository.Distributions) == 0 || slices.Contains(a.options.Repository.Distributions, distMap.Target) {
 				distsToProcess = append(distsToProcess, distMap)
 			}
 		}
@@ -470,12 +470,12 @@ func (a *Apt) processFeedPackageFile(feedOpts *feed.FeedOptions, relPath string,
 	component := common.MainComponent
 
 	// Filter whether source or debug packages are included
-	if pkg.IsSource && !feedOpts.Packages.Source {
+	if pkg.IsSource && !a.options.Repository.Packages.Source {
 		return nil
 	}
 
 	if debext.IsDebugPackage(pkg) {
-		if !feedOpts.Packages.Debug {
+		if !a.options.Repository.Packages.Debug {
 			return nil
 		}
 
@@ -483,17 +483,24 @@ func (a *Apt) processFeedPackageFile(feedOpts *feed.FeedOptions, relPath string,
 	}
 
 	// Filter by architecture if specified
-	if len(feedOpts.Architectures) > 0 {
-		if !slices.Contains(append(feedOpts.Architectures, debext.AllArchitecture), pkg.Architecture) {
+	if len(a.options.Repository.Architectures) > 0 {
+		if !slices.Contains(append(a.options.Repository.Architectures, debext.AllArchitecture), pkg.Architecture) {
 			return nil
 		}
 	}
 
 	// Filter by source name patterns if specified
-	if len(feedOpts.Sources) > 0 {
+	if len(feedOpts.FromSources) > 0 {
 		sourceName := debext.GetSourceNameFromPackage(pkg)
-		if !common.MatchesGlobPatterns(feedOpts.Sources, sourceName) {
+		if !common.MatchesGlobPatterns(feedOpts.FromSources, sourceName) {
 			return nil // Skip packages not matching source patterns
+		}
+	}
+
+	// Filter by package name patterns if specified
+	if len(feedOpts.Packages) > 0 {
+		if !common.MatchesGlobPatterns(feedOpts.Packages, pkg.Name) {
+			return nil // Skip packages not matching package name patterns
 		}
 	}
 
@@ -525,7 +532,7 @@ func (a *Apt) parseFile(relPath string) (*deb.Package, error) {
 	ext := strings.ToLower(filepath.Ext(relPath))
 
 	// Skip debug packages if not included
-	if !a.options.PackageOptions.Debug && debext.IsDebugByName(filename) {
+	if !a.options.Repository.Packages.Debug && debext.IsDebugByName(filename) {
 		return nil, nil
 	}
 
@@ -536,7 +543,7 @@ func (a *Apt) parseFile(relPath string) (*deb.Package, error) {
 
 	// Parse source packages
 	if ext == ".dsc" {
-		if !a.options.PackageOptions.Source {
+		if !a.options.Repository.Packages.Source {
 			return nil, nil
 		}
 

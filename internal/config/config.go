@@ -172,13 +172,10 @@ type WorkersConfig struct {
 
 // RepositoryConfig represents a single repository configuration
 type RepositoryConfig struct {
-	Name          string                   `yaml:"-"` // Derived from filename
-	Packages      common.PackageOptions    `yaml:"packages"`
-	Distributions []string                 `yaml:"distributions,omitempty"`
-	Architectures []string                 `yaml:"architectures,omitempty"`
-	Retention     []common.RetentionPolicy `yaml:"retention,omitempty"`
-	Verification  VerificationConfig       `yaml:"verification,omitempty"`
-	Feeds         []*feed.FeedOptions      `yaml:"feeds"`
+	Name                     string `yaml:"-"` // Derived from filename
+	common.RepositoryOptions `yaml:",inline"`
+	Verification             VerificationConfig  `yaml:"verification,omitempty"`
+	Feeds                    []*feed.FeedOptions `yaml:"feeds"`
 }
 
 // VerificationConfig contains package verification settings
@@ -318,20 +315,4 @@ func (c *Config) loadRepositories() error {
 
 	c.Repositories = repos
 	return nil
-}
-
-// defaults applies default values to a repository configuration
-func (r *RepositoryConfig) defaults() {
-	for _, feedOpts := range r.Feeds {
-		// Architectures, RetentionPolicies, and Packages are always inherited from repository
-		feedOpts.Architectures = r.Architectures
-		feedOpts.RetentionPolicies = r.Retention
-		feedOpts.Packages = r.Packages
-
-		if feedOpts.Type == feed.FeedTypeGitHub {
-			if len(feedOpts.Releases) == 0 {
-				feedOpts.Releases = []feed.ReleaseType{feed.ReleaseTypeRelease}
-			}
-		}
-	}
 }

@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dionysius/aarg/internal/common"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,16 +63,12 @@ type FeedOptions struct {
 
 	// Common to all feeds
 	Distributions []DistributionMap // Distribution mappings from feed to target repository
-	Architectures []string          // Architectures to fetch and process
 
 	// Package source filtering - which packages to include
-	Sources []string // Source name patterns (glob, ! for negation), empty = include all
+	FromSources []string // Source name patterns (glob, ! for negation), empty = include all
 
-	// Retention policies for version filtering - which versions to keep
-	RetentionPolicies []common.RetentionPolicy // Applied to determine which versions to keep
-
-	// Package filtering options
-	Packages common.PackageOptions // IncludeDebug, IncludeSource
+	// Package name filtering - which packages to include
+	Packages []string // Package name patterns (glob, ! for negation), empty = include all
 }
 
 // DistributionMap represents a mapping from a feed's distribution name to the target repository distribution name.
@@ -143,11 +138,12 @@ func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 		GitHub        *string           `yaml:"github"`
 		APT           *string           `yaml:"apt"`
 		OBS           *string           `yaml:"obs"`
-		Releases      []string          `yaml:"releases"`
+		Releases      []ReleaseType     `yaml:"releases"`
 		Tags          []string          `yaml:"tags"`
 		Components    []string          `yaml:"components"`
 		Distributions []DistributionMap `yaml:"distributions"`
-		Sources       []string          `yaml:"sources"`
+		FromSources   []string          `yaml:"from_sources"`
+		Packages      []string          `yaml:"packages"`
 	}
 
 	var aux feedOptionsAlias
@@ -215,25 +211,17 @@ func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 		return fmt.Errorf("feed must specify one of: github, apt, obs")
 	}
 
-	// Convert release type strings to ReleaseType constants
-	if len(aux.Releases) > 0 {
-		f.Releases = make([]ReleaseType, 0, len(aux.Releases))
-		for _, r := range aux.Releases {
-			switch r {
-			case "release":
-				f.Releases = append(f.Releases, ReleaseTypeRelease)
-			case "pre-release":
-				f.Releases = append(f.Releases, ReleaseTypePrerelease)
-			case "draft":
-				f.Releases = append(f.Releases, ReleaseTypeDraft)
-			}
-		}
+	// Default to "release" if no release types specified
+	if len(aux.Releases) == 0 {
+		aux.Releases = []ReleaseType{ReleaseTypeRelease}
 	}
 
 	// Set other fields
+	f.Releases = aux.Releases
 	f.Tags = aux.Tags
 	f.Distributions = aux.Distributions
-	f.Sources = aux.Sources
+	f.FromSources = aux.FromSources
+	f.Packages = aux.Packages
 
 	return nil
 }
@@ -263,8 +251,11 @@ func (f FeedOptions) MarshalYAML() (any, error) {
 	if len(f.Distributions) > 0 {
 		output["distributions"] = f.Distributions
 	}
-	if len(f.Sources) > 0 {
-		output["sources"] = f.Sources
+	if len(f.FromSources) > 0 {
+		output["from_sources"] = f.FromSources
+	}
+	if len(f.Packages) > 0 {
+		output["packages"] = f.Packages
 	}
 	if len(f.Releases) > 0 {
 		releases := make([]string, len(f.Releases))

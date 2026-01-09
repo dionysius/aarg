@@ -58,13 +58,14 @@ func (a *Application) Fetch(ctx context.Context, repoNames []string) error {
 				// Create feed instance based on type
 				var feedInst feed.Feed
 				var err error
+
 				switch feedType {
 				case feed.FeedTypeGitHub:
-					feedInst, err = feed.NewGithub(storage, a.GitHubClient, feedVerifier, opts, a.MainPool)
+					feedInst, err = feed.NewGithub(storage, a.GitHubClient, feedVerifier, opts, &repo.RepositoryOptions, a.MainPool)
 				case feed.FeedTypeAPT:
-					feedInst, err = feed.NewApt(storage, feedVerifier, opts, a.MainPool)
+					feedInst, err = feed.NewApt(storage, feedVerifier, opts, &repo.RepositoryOptions, a.MainPool)
 				case feed.FeedTypeOBS:
-					feedInst, err = feed.NewOBS(storage, feedVerifier, opts, a.MainPool)
+					feedInst, err = feed.NewOBS(storage, feedVerifier, opts, &repo.RepositoryOptions, a.MainPool)
 				default:
 					return fmt.Errorf("unsupported feed type: %s", feedType)
 				}

@@ -28,17 +28,17 @@ retention:
   - pattern: "*.#.#-*"
     amount: [5,3]
     # Filter packages by their source package name (empty = all, supports shell-style glob patterns, negation via ! prefix)
-    # sources: ["*"]
+    # from_sources: ["*"]
 
   # Example: Apply different retention rules per package
   # Keep last 3 minor versions for most packages, excluding vaultwarden-web-vault
   # - pattern: "*.#.*-*"
   #   amount: [3]
-  #   sources: ["*", "!vaultwarden-web-vault"]
+  #   from_sources: ["*", "!vaultwarden-web-vault"]
   # vaultwarden-web-vault uses a more granular retention policy
   # - pattern: "*.#.#-*"
   #   amount: [5, 3]
-  #   sources: ["vaultwarden-web-vault"]
+  #   from_sources: ["vaultwarden-web-vault"]
 
 # Verification keys (applies to all feeds)
 # If no keyring or keys are specified, falls back to system's ~/.gnupg/trustedkeys.gpg
@@ -58,7 +58,7 @@ feeds:
     # releases:
     #   - release
     #
-    # Distributions to filter (optional, empty = all discovered)
+    # Filter by distributions (optional, empty = all discovered)
     # distributions:
     #   - noble                   # Download "noble" releases
     #   - trixie                  # Download "trixie" releases
@@ -90,11 +90,9 @@ feeds:
     # distributions:
     #   - Debian_13: trixie       # Fetch "Debian_13", map to "trixie" in output
     #   - xUbuntu_24.04: noble    # Fetch "xUbuntu_24.04", map to "noble" in output
-    #
-    # above internally creates APT feeds with flat repo configuration:
-    #   - apt: "download.opensuse.org/repositories/home:/dionysius:/vaultwarden/Debian_13"
-    #     distributions:
-    #       - "/": trixie
-    #   - apt: "download.opensuse.org/repositories/home:/dionysius:/vaultwarden/xUbuntu_24.04"
-    #     distributions:
-    #       - "/": noble
+
+    # Settings applicable to all feed types:
+    # Filter packages by their source package name (empty = all, supports shell-style glob patterns, negation via ! prefix)
+    # from_sources: ["*", "!some-other-source"]
+    # Filter packages by their package name (empty = all, supports shell-style glob patterns, negation via ! prefix)
+    # by_packages: ["*", "!some-other-package"]

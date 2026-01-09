@@ -14,3 +14,14 @@ type PackageOptions struct {
 	// Source indicates whether to include source packages
 	Source bool `yaml:"source"`
 }
+
+// RepositoryConfig options which can be relevant for feeds to download only requested packages
+type RepositoryOptions struct {
+	Packages PackageOptions `yaml:"packages,omitempty"`
+	// Distributions to fetch and process
+	Distributions []string `yaml:"distributions,omitempty"`
+	// Architectures to fetch and process
+	Architectures []string `yaml:"architectures,omitempty"`
+	// Retention policies for version filtering - which versions to keep
+	Retention []RetentionPolicy `yaml:"retention,omitempty"`
+}

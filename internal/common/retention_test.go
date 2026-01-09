@@ -22,7 +22,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{},
+					FromSources:     []string{},
 				},
 			},
 			sourceName: "any-source",
@@ -33,7 +33,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"vaultwarden"},
+					FromSources:     []string{"vaultwarden"},
 				},
 			},
 			sourceName: "vaultwarden",
@@ -44,7 +44,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"vaultwarden"},
+					FromSources:     []string{"vaultwarden"},
 				},
 			},
 			sourceName: "other-package",
@@ -55,7 +55,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"vault*"},
+					FromSources:     []string{"vault*"},
 				},
 			},
 			sourceName: "vaultwarden",
@@ -66,7 +66,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"vault*", "!*-web-*"},
+					FromSources:     []string{"vault*", "!*-web-*"},
 				},
 			},
 			sourceName: "vaultwarden-web-vault",
@@ -77,7 +77,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"vault*", "!*-web-*"},
+					FromSources:     []string{"vault*", "!*-web-*"},
 				},
 			},
 			sourceName: "vaultwarden",
@@ -88,11 +88,11 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"*", "!vaultwarden-web-vault"},
+					FromSources:     []string{"*", "!vaultwarden-web-vault"},
 				},
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.#", Amount: []int{5, 2}},
-					Sources:       []string{"vaultwarden-web-vault"},
+					FromSources:     []string{"vaultwarden-web-vault"},
 				},
 			},
 			sourceName: "vaultwarden-web-vault",
@@ -106,7 +106,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"!excluded-*"},
+					FromSources:     []string{"!excluded-*"},
 				},
 			},
 			sourceName: "excluded-package",
@@ -117,7 +117,7 @@ func TestFilterBySource(t *testing.T) {
 			policies: []RetentionPolicy{
 				{
 					RetentionRule: RetentionRule{Pattern: "*.#.*", Amount: []int{3}},
-					Sources:       []string{"!excluded-*"},
+					FromSources:     []string{"!excluded-*"},
 				},
 			},
 			sourceName: "normal-package",

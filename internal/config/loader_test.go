@@ -254,7 +254,7 @@ feeds:
 		require.Len(t, cfg.Repositories, 1)
 		require.Len(t, cfg.Repositories[0].Feeds, 1)
 
-		// Check that feed inherited architectures
-		assert.Equal(t, []string{"amd64", "arm64"}, cfg.Repositories[0].Feeds[0].Architectures)
+		// Check that repository has architectures (now passed separately to feeds)
+		assert.Equal(t, []string{"amd64", "arm64"}, cfg.Repositories[0].Architectures)
 	})
 }

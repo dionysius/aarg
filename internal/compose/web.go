@@ -381,7 +381,7 @@ func parseTemplates() (*template.Template, error) {
 
 // Web generates static HTML pages for repository browsing
 type Web struct {
-	opts         *WebComposeOptions
+	options      *WebComposeOptions
 	downloader   *common.Downloader
 	githubClient *github.Client
 	tmpl         *template.Template
@@ -420,14 +420,15 @@ type RepositoryLink struct {
 
 // RepositoryPageData contains data for a repository detail page
 type RepositoryPageData struct {
-	ComposeOptions *ComposeOptions
-	BaseURL        string // Base URL for the repository
-	Repository     *debext.Repository
-	AssetsPath     string                 // Relative path to assets directory
-	Tables         []PreparedPackageTable // Pre-computed package tables
-	Feeds          []FeedInfo             // Feed display info with icons
-	PageTitle      string                 // Title for the navigation bar
-	KeyringName    string                 // Keyring filename (sanitized domain)
+	ComposeOptions    *ComposeOptions
+	RepositoryOptions *common.RepositoryOptions
+	BaseURL           string // Base URL for the repository
+	Repository        *debext.Repository
+	AssetsPath        string                 // Relative path to assets directory
+	Tables            []PreparedPackageTable // Pre-computed package tables
+	Feeds             []FeedInfo             // Feed display info with icons
+	PageTitle         string                 // Title for the navigation bar
+	KeyringName       string                 // Keyring filename (sanitized domain)
 }
 
 // DirectoryListingData contains data for a directory browsing page
@@ -457,7 +458,7 @@ func NewWeb(options *WebComposeOptions, downloader *common.Downloader) (*Web, er
 	}
 
 	return &Web{
-		opts:         options,
+		options:      options,
 		downloader:   downloader,
 		githubClient: options.GitHubClient,
 		tmpl:         tmpl,
@@ -471,13 +472,10 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		return err
 	}
 
-	// Use distributions directly from repo
-	composeOpts := w.opts.ComposeOptions
-
-	keyringName := GenerateKeyringName(w.opts.BaseURL)
+	keyringName := GenerateKeyringName(w.options.BaseURL)
 
 	// Prepare tables first to get sorted distributions
-	tables := prepareAllPackageTables(repo, w.opts.Name, w.opts.PrimaryPackage)
+	tables := prepareAllPackageTables(repo, w.options.Name, w.options.PrimaryPackage)
 
 	// Use sorted distributions from tables (all tables use the same sorting)
 	if len(tables) > 0 && len(tables[0].DistHeaders) > 0 {
@@ -485,20 +483,21 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		for _, header := range tables[0].DistHeaders {
 			sortedDists = append(sortedDists, header.Name)
 		}
-		composeOpts.Distributions = sortedDists
+		w.options.Repository.Distributions = sortedDists
 	} else {
-		composeOpts.Distributions = repo.GetDistributions()
+		w.options.Repository.Distributions = repo.GetDistributions()
 	}
 
 	data := RepositoryPageData{
-		ComposeOptions: &composeOpts,
-		BaseURL:        w.opts.BaseURL,
-		Repository:     repo,
-		AssetsPath:     "../", // Repository pages are in subdirectories, so need ../ to reach assets
-		Tables:         tables,
-		Feeds:          w.prepareFeedInfo(),
-		PageTitle:      "APT Repositories",
-		KeyringName:    keyringName,
+		ComposeOptions:    &w.options.ComposeOptions,
+		RepositoryOptions: w.options.Repository,
+		BaseURL:           w.options.BaseURL,
+		Repository:        repo,
+		AssetsPath:        "../", // Repository pages are in subdirectories, so need ../ to reach assets
+		Tables:            tables,
+		Feeds:             w.prepareFeedInfo(),
+		PageTitle:         "APT Repositories",
+		KeyringName:       keyringName,
 	}
 
 	// Render template by executing base.html which will use the repository.html blocks
@@ -521,7 +520,7 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 	}
 
 	// Write to file in repository subdirectory
-	repoDir := filepath.Join(w.opts.Target, w.opts.Name)
+	repoDir := filepath.Join(w.options.Target, w.options.Name)
 	if err := os.MkdirAll(repoDir, 0755); err != nil {
 		return err
 	}
@@ -532,8 +531,8 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 
 	// Generate install.sh script for this repository
 	installScript, err := GenerateInstallScript(InstallScriptOptions{
-		RepoName:      w.opts.Name,
-		BaseURL:       w.opts.BaseURL,
+		RepoName:      w.options.Name,
+		BaseURL:       w.options.BaseURL,
 		Distributions: repo.GetDistributions(),
 		KeyringName:   keyringName,
 	})
@@ -546,17 +545,17 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 	}
 
 	// Export repository config as YAML
-	configYAML, err := yaml.Marshal(w.opts.RepositoryConfig)
+	configYAML, err := yaml.Marshal(w.options.RepositoryConfig)
 	if err != nil {
 		return err
 	}
-	configPath := filepath.Join(repoDir, w.opts.Name+".yaml")
+	configPath := filepath.Join(repoDir, w.options.Name+".yaml")
 	if err := os.WriteFile(configPath, configYAML, 0644); err != nil {
 		return err
 	}
 
 	// Generate directory indexes for browsing dists/ and subdirectories
-	if err := w.GenerateDirectoryIndexes(ctx, w.opts.Name); err != nil {
+	if err := w.GenerateDirectoryIndexes(ctx, w.options.Name); err != nil {
 		return err
 	}
 
@@ -567,7 +566,7 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 func (w *Web) Index(ctx context.Context) error {
 
 	// Scan for repository subdirectories in TargetDir
-	entries, err := os.ReadDir(w.opts.Target)
+	entries, err := os.ReadDir(w.options.Target)
 	if err != nil {
 		return err
 	}
@@ -581,7 +580,7 @@ func (w *Web) Index(ctx context.Context) error {
 		name := entry.Name()
 
 		// Check if directory contains an index.html file (indicating it's a repository)
-		indexPath := filepath.Join(w.opts.Target, name, "index.html")
+		indexPath := filepath.Join(w.options.Target, name, "index.html")
 		if _, err := os.Stat(indexPath); err == nil {
 			repositories = append(repositories, RepositoryLink{
 				Name: name,
@@ -609,7 +608,7 @@ func (w *Web) Index(ctx context.Context) error {
 	}
 
 	// Write to file
-	indexPath := filepath.Join(w.opts.Target, "index.html")
+	indexPath := filepath.Join(w.options.Target, "index.html")
 	if err := os.WriteFile(indexPath, buf.Bytes(), 0644); err != nil {
 		return err
 	}
@@ -625,11 +624,11 @@ func (w *Web) Index(ctx context.Context) error {
 
 // prepareFeedInfo extracts feed information for template rendering
 func (w *Web) prepareFeedInfo() []FeedInfo {
-	feeds := make([]FeedInfo, 0, len(w.opts.Feeds))
-	for _, feedOpts := range w.opts.Feeds {
+	feeds := make([]FeedInfo, 0, len(w.options.Feeds))
+	for _, feedOpts := range w.options.Feeds {
 		// Map to icon using configured icon URLs
 		icon := ""
-		if _, exists := w.opts.IconURLs[string(feedOpts.Type)]; exists {
+		if _, exists := w.options.IconURLs[string(feedOpts.Type)]; exists {
 			icon = string(feedOpts.Type)
 		}
 
@@ -664,8 +663,13 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 		}
 
 		// Source filtering
-		if len(feedOpts.Sources) > 0 {
-			details = append(details, "Sources: "+strings.Join(feedOpts.Sources, ", "))
+		if len(feedOpts.FromSources) > 0 {
+			details = append(details, "From sources: "+strings.Join(feedOpts.FromSources, ", "))
+		}
+
+		// Package filtering
+		if len(feedOpts.Packages) > 0 {
+			details = append(details, "Packages: "+strings.Join(feedOpts.Packages, ", "))
 		}
 
 		feeds = append(feeds, FeedInfo{
@@ -684,7 +688,7 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 // This should be called after all HTML files have been generated
 func (w *Web) BuildTailwindCSS(ctx context.Context) error {
 	// Output CSS path in PublicDir
-	publicCSSDir := filepath.Join(w.opts.Target, "assets", "css")
+	publicCSSDir := filepath.Join(w.options.Target, "assets", "css")
 	if err := os.MkdirAll(publicCSSDir, 0755); err != nil {
 		return fmt.Errorf("creating CSS directory: %w", err)
 	}
@@ -703,12 +707,12 @@ func (w *Web) BuildTailwindCSS(ctx context.Context) error {
 	}
 
 	var inputCSSBuf bytes.Buffer
-	if err := tmpl.Execute(&inputCSSBuf, struct{ TargetDir string }{TargetDir: w.opts.Target}); err != nil {
+	if err := tmpl.Execute(&inputCSSBuf, struct{ TargetDir string }{TargetDir: w.options.Target}); err != nil {
 		return fmt.Errorf("executing input.css template: %w", err)
 	}
 
 	// Write input.css to temp file
-	tempDir := filepath.Join(w.opts.Downloads, "temp")
+	tempDir := filepath.Join(w.options.Downloads, "temp")
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return fmt.Errorf("creating temp directory: %w", err)
 	}
@@ -721,9 +725,9 @@ func (w *Web) BuildTailwindCSS(ctx context.Context) error {
 	// Create Tailwind CLI and build CSS
 	// Pass Downloads directory as cwd so @source paths resolve correctly
 	// Store Tailwind binary in assets subdirectory of downloads
-	assetsDir := filepath.Join(w.opts.Downloads, assetCacheDir)
-	tailwind := NewTailwindCLI(w.downloader, w.githubClient, assetsDir, w.opts.TailwindRelease)
-	if err := tailwind.Build(ctx, inputCSS, outputCSS, w.opts.Downloads); err != nil {
+	assetsDir := filepath.Join(w.options.Downloads, assetCacheDir)
+	tailwind := NewTailwindCLI(w.downloader, w.githubClient, assetsDir, w.options.TailwindRelease)
+	if err := tailwind.Build(ctx, inputCSS, outputCSS, w.options.Downloads); err != nil {
 		return fmt.Errorf("building CSS: %w", err)
 	}
 
@@ -735,7 +739,7 @@ func (w *Web) ensureIcons(ctx context.Context) error {
 	// Merge default and configured icon URLs
 	iconURLs := make(map[string]string)
 	maps.Copy(iconURLs, defaultIconURLs)
-	maps.Copy(iconURLs, w.opts.IconURLs)
+	maps.Copy(iconURLs, w.options.IconURLs)
 
 	// Download each icon
 	for feedType, iconURL := range iconURLs {
@@ -750,7 +754,7 @@ func (w *Web) ensureIcons(ctx context.Context) error {
 // ensureIcon downloads a single icon to cache and hardlinks it to PublicDir
 func (w *Web) ensureIcon(ctx context.Context, feedType, iconURL string) error {
 	// Determine cache path in downloads folder
-	cacheDir := filepath.Join(w.opts.Downloads, assetCacheDir, "icons")
+	cacheDir := filepath.Join(w.options.Downloads, assetCacheDir, "icons")
 	iconFilename := feedType + ".svg"
 	cachedIconPath := filepath.Join(cacheDir, iconFilename)
 
@@ -767,7 +771,7 @@ func (w *Web) ensureIcon(ctx context.Context, feedType, iconURL string) error {
 	}
 
 	// Hardlink to PublicDir/assets/icons/
-	publicIconDir := filepath.Join(w.opts.Target, "assets", "icons")
+	publicIconDir := filepath.Join(w.options.Target, "assets", "icons")
 	if err := os.MkdirAll(publicIconDir, 0755); err != nil {
 		return err
 	}
@@ -802,7 +806,7 @@ func (w *Web) downloadAsset(ctx context.Context, url, destPath string) error {
 
 // GenerateDirectoryIndexes creates browsable index.html files for dists/ and subdirectories
 func (w *Web) GenerateDirectoryIndexes(ctx context.Context, repoName string) error {
-	repoDir := filepath.Join(w.opts.Target, repoName)
+	repoDir := filepath.Join(w.options.Target, repoName)
 	distsDir := filepath.Join(repoDir, "dists")
 
 	// Check if dists directory exists

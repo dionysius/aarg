@@ -24,18 +24,19 @@ var (
 
 // Github handles github release downloads
 type Github struct {
-	options   *FeedOptions
-	client    *github.Client
-	owner     string
-	repo      string
-	verifier  *debext.Verifier
-	storage   *common.Storage
-	pool      pond.Pool
-	collector *common.GenericRetentionCollector[githubChanges]
+	options    *FeedOptions
+	repository *common.RepositoryOptions
+	client     *github.Client
+	owner      string
+	repo       string
+	verifier   *debext.Verifier
+	storage    *common.Storage
+	pool       pond.Pool
+	collector  *common.GenericRetentionCollector[githubChanges]
 }
 
 // NewGithub creates a new Github feed
-func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.Verifier, options *FeedOptions, pool pond.Pool) (*Github, error) {
+func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.Verifier, options *FeedOptions, repository *common.RepositoryOptions, pool pond.Pool) (*Github, error) {
 	// parse github repository
 	parts := strings.SplitN(options.Name, "/", 2)
 	if len(parts) != 2 {
@@ -45,14 +46,15 @@ func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.
 	repo := parts[1]
 
 	return &Github{
-		options:   options,
-		client:    client,
-		owner:     owner,
-		repo:      repo,
-		verifier:  verifier,
-		storage:   storage,
-		pool:      pool,
-		collector: newGithubChangesRetentionCollector(options.RetentionPolicies),
+		options:    options,
+		repository: repository,
+		client:     client,
+		owner:      owner,
+		repo:       repo,
+		verifier:   verifier,
+		storage:    storage,
+		pool:       pool,
+		collector:  newGithubChangesRetentionCollector(repository.Retention),
 	}, nil
 }
 
@@ -168,7 +170,12 @@ func (s *Github) processChangesFile(ctx context.Context, changesAsset *github.Re
 	}
 
 	// Filter: Check if source should be included
-	if !common.MatchesGlobPatterns(s.options.Sources, sourcePkgName) {
+	if !common.MatchesGlobPatterns(s.options.FromSources, sourcePkgName) {
+		return nil
+	}
+
+	// Filter: Check if package should be included (check against source package name for .changes files)
+	if !common.MatchesGlobPatterns(s.options.Packages, sourcePkgName) {
 		return nil
 	}
 
@@ -190,7 +197,7 @@ func (s *Github) processKeptChangesFile(ctx context.Context, changes *deb.Change
 
 	for _, referencedFile := range changes.Files {
 		// Add .dsc files if requested
-		if strings.HasSuffix(referencedFile.Filename, ".dsc") && s.options.Packages.Source {
+		if strings.HasSuffix(referencedFile.Filename, ".dsc") && s.repository.Packages.Source {
 			idx := len(fileResults)
 			fileResults = append(fileResults, nil)
 			group.SubmitErr(func() error {
@@ -206,7 +213,7 @@ func (s *Github) processKeptChangesFile(ctx context.Context, changes *deb.Change
 		// Add binary packages
 		if strings.HasSuffix(referencedFile.Filename, ".deb") || strings.HasSuffix(referencedFile.Filename, ".ddeb") {
 			// Skip debug packages if not included
-			if debext.IsDebugByName(referencedFile.Filename) && !s.options.Packages.Debug {
+			if debext.IsDebugByName(referencedFile.Filename) && !s.repository.Packages.Debug {
 				continue
 			}
 
@@ -409,10 +416,10 @@ func (s *Github) findFileInRelease(file deb.PackageFile, release *github.Reposit
 // NewChangesRetentionCollector creates a collector for githubChanges items
 // grouping by source name only and arch is always "source"
 func newGithubChangesRetentionCollector(
-	retentionPolicies []common.RetentionPolicy,
+	retention []common.RetentionPolicy,
 ) *common.GenericRetentionCollector[githubChanges] {
 	return common.NewGenericRetentionCollector(
-		retentionPolicies,
+		retention,
 		func(pkg githubChanges) (string, string, string, string) {
 			return pkg.changes.Source, pkg.changes.Source, debext.SourceArchitecture, pkg.changes.GetField("Version")
 		},

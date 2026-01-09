@@ -1,6 +1,6 @@
 {{define "repo-installation"}}
 <!-- Installation Instructions -->
-{{if .ComposeOptions.Distributions}}
+{{if .RepositoryOptions.Distributions}}
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
     <!-- Title bar with tabs and signing keys -->
     <div class="border-b border-gray-200 dark:border-gray-700">
@@ -35,24 +35,24 @@
             <div class="flex-1">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Distribution</label>
                 <div id="distro-buttons" class="flex flex-wrap gap-2">
-                    {{range .ComposeOptions.Distributions}}
+                    {{range .RepositoryOptions.Distributions}}
                     <button onclick="selectDistro('{{.}}')" data-distro="{{.}}" class="distro-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all">
                         {{.}}
                     </button>
                     {{end}}
                 </div>
             </div>
-            {{ if or .ComposeOptions.PackageOptions.Debug .ComposeOptions.PackageOptions.Source }}
+            {{ if or .RepositoryOptions.Packages.Debug .RepositoryOptions.Packages.Source }}
             <!-- Package Type Options -->
             <div class="flex-shrink-0">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Include</label>
                 <div class="flex flex-wrap gap-3">
-                    {{if .ComposeOptions.PackageOptions.Debug}}
+                    {{if .RepositoryOptions.Packages.Debug}}
                     <button onclick="toggleOption('debug')" id="option-debug" class="option-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all">
                         Debug
                     </button>
                     {{end}}
-                    {{if .ComposeOptions.PackageOptions.Source}}
+                    {{if .RepositoryOptions.Packages.Source}}
                     <button onclick="toggleOption('source')" id="option-source" class="option-btn px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:border-gray-400 dark:hover:border-gray-500 transition-all">
                         Source
                     </button>

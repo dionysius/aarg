@@ -18,22 +18,24 @@ import (
 
 // Apt handles APT repository downloads
 type Apt struct {
-	options  *FeedOptions
-	verifier *debext.Verifier
-	storage  *common.Storage
-	pool     pond.Pool
-	baseURL  *url.URL
+	options    *FeedOptions
+	repository *common.RepositoryOptions
+	verifier   *debext.Verifier
+	storage    *common.Storage
+	pool       pond.Pool
+	baseURL    *url.URL
 }
 
 // NewApt creates a new APT feed
-func NewApt(storage *common.Storage, verifier *debext.Verifier, options *FeedOptions, pool pond.Pool) (*Apt, error) {
+func NewApt(storage *common.Storage, verifier *debext.Verifier, options *FeedOptions, repository *common.RepositoryOptions, pool pond.Pool) (*Apt, error) {
 	// Use DownloadURL directly (already a parsed URL with scheme)
 	return &Apt{
-		options:  options,
-		verifier: verifier,
-		storage:  storage,
-		pool:     pool,
-		baseURL:  options.DownloadURL,
+		options:    options,
+		repository: repository,
+		verifier:   verifier,
+		storage:    storage,
+		pool:       pool,
+		baseURL:    options.DownloadURL,
 	}, nil
 }
 
@@ -213,11 +215,16 @@ func (s *Apt) processIndex(ctx context.Context, localPath string, indexPath stri
 func (s *Apt) downloadPackageFiles(ctx context.Context, dist string, packages []*deb.Package) ([]*common.FileForTrust, error) {
 	// Collect packages and filter
 	// Use NoMatchKeep to preserve packages with unexpected version formats
-	collector := common.NewPackageRetentionCollector(s.options.RetentionPolicies)
+	collector := common.NewPackageRetentionCollector(s.repository.Retention)
 
 	for _, pkg := range packages {
 		// Filter by source first
-		if !common.MatchesGlobPatterns(s.options.Sources, debext.GetSourceNameFromPackage(pkg)) {
+		if !common.MatchesGlobPatterns(s.options.FromSources, debext.GetSourceNameFromPackage(pkg)) {
+			continue
+		}
+
+		// Filter by package name
+		if !common.MatchesGlobPatterns(s.options.Packages, pkg.Name) {
 			continue
 		}
 
@@ -273,7 +280,7 @@ func (s *Apt) downloadPackageFiles(ctx context.Context, dist string, packages []
 				downloadedFiles[idx].Path = path
 
 				// Verify .dsc file signatures after download
-				if strings.HasSuffix(relPath, ".dsc") && s.options.Packages.Source {
+				if strings.HasSuffix(relPath, ".dsc") && s.repository.Packages.Source {
 					if err := s.verifyDscFile(path, file.Filename); err != nil {
 						return err
 					}
@@ -339,7 +346,7 @@ func (s *Apt) findUniqueBaseIndices(release *debext.Release) []string {
 		if baseName == "Packages" {
 			// Always include Packages indices
 		} else if baseName == "Sources" {
-			if !s.options.Packages.Source {
+			if !s.repository.Packages.Source {
 				continue
 			}
 		} else {
