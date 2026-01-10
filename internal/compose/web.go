@@ -673,9 +673,11 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 		if len(feedOpts.Distributions) > 0 {
 			distStrs := make([]string, len(feedOpts.Distributions))
 			for i, dm := range feedOpts.Distributions {
-				if dm.Feed == dm.Target {
-					distStrs[i] = dm.Target
+				if dm.Target == "" || dm.Feed == dm.Target {
+					// No explicit target or identity mapping - show only the distribution name
+					distStrs[i] = dm.Feed
 				} else {
+					// Explicit target mapping - show the arrow
 					distStrs[i] = dm.Feed + " -> " + dm.Target
 				}
 			}
