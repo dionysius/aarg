@@ -407,13 +407,13 @@ type FeedDetail struct {
 }
 
 type FeedInfo struct {
-	Type        feed.FeedType
-	Path        string       // Storage path (used internally)
-	DisplayPath string       // Path to display to users (shortened for OBS)
-	URL         string       // URL to the feed source
-	Icon        string       // Icon filename without extension
-	Details     []FeedDetail // Formatted details to display (distributions, filters, etc.)
-	NoChanges   bool         // Whether this feed uses no_changes mode (no signature verification)
+	Type      feed.FeedType // Feed type (GitHub, APT, OBS)
+	Name      string        // Feed name
+	Subtitle  string        // Subtitle
+	URL       string        // URL to the feed source
+	Icon      string        // Icon filename without extension
+	Details   []FeedDetail  // Formatted details to display (distributions, filters, etc.)
+	NoChanges bool          // Whether this feed uses no_changes mode (no signature verification)
 }
 
 // IndexData contains data for the root index page
@@ -711,20 +711,19 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 		// No changes mode indicator
 		if feedOpts.NoChanges {
 			details = append(details, FeedDetail{
-				Text:    "No changes mode",
-				Hover:   "Feed does not produce signed .changes file, packages are parsed without signature verification. Checksums are still verified against the github release asset digest if available.",
+				Text:    "no-changes mode",
+				Hover:   "Feed does not produce signed .changes file, packages are parsed without signature verification. Checksums are verified against GitHub release asset digest if provided by GitHub.",
 				Warning: true,
 			})
 		}
 
 		feeds = append(feeds, FeedInfo{
-			Type:        feedOpts.Type,
-			Path:        feedOpts.RelativePath,
-			DisplayPath: feedOpts.Name,
-			URL:         feedOpts.ProjectURL.String(),
-			Icon:        icon,
-			Details:     details,
-			NoChanges:   feedOpts.NoChanges,
+			Type:      feedOpts.Type,
+			Name:      feedOpts.Name,
+			URL:       feedOpts.ProjectURL.String(),
+			Icon:      icon,
+			Details:   details,
+			NoChanges: feedOpts.NoChanges,
 		})
 	}
 	return feeds

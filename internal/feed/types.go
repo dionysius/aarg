@@ -80,7 +80,7 @@ type DistributionMap struct {
 }
 
 // UnmarshalYAML implements custom unmarshaling for DistributionMap to support both formats:
-// - String: "noble" -> {Feed: "noble", Target: "noble"}
+// - String: "noble" -> {Feed: "noble", Target: ""} (Target auto-mapped by expansion)
 // - Map: {"focal": "stable"} -> {Feed: "focal", Target: "stable"}
 func (d *DistributionMap) UnmarshalYAML(node *yaml.Node) error {
 	// Try unmarshaling as string first
@@ -90,7 +90,7 @@ func (d *DistributionMap) UnmarshalYAML(node *yaml.Node) error {
 			return err
 		}
 		d.Feed = str
-		d.Target = str
+		d.Target = "" // Leave empty for auto-mapping
 		return nil
 	}
 
@@ -114,10 +114,10 @@ func (d *DistributionMap) UnmarshalYAML(node *yaml.Node) error {
 }
 
 // MarshalYAML implements custom marshaling for DistributionMap:
-// - If Feed == Target: output as string "noble"
+// - If Target is empty or equals Feed: output as string "noble"
 // - If Feed != Target: output as map {"focal": "stable"}
 func (d DistributionMap) MarshalYAML() (any, error) {
-	if d.Feed == d.Target {
+	if d.Target == "" || d.Feed == d.Target {
 		return d.Feed, nil
 	}
 	return map[string]string{d.Feed: d.Target}, nil

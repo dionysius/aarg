@@ -35,7 +35,7 @@ type Github struct {
 	collector  any // Either *GenericRetentionCollector[githubChanges] or *GenericRetentionCollector[githubBinaryPackage]
 }
 
-// NewGithub creates a new Github feed
+// NewGithub creates a new Github feed.
 func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.Verifier, options *FeedOptions, repository *common.RepositoryOptions, pool pond.Pool) (*Github, error) {
 	// parse github repository
 	parts := strings.SplitN(options.Name, "/", 2)
@@ -369,11 +369,20 @@ func (s *Github) processKeptBinaryPackageNoChanges(ctx context.Context, pkgData 
 	filePath := s.storage.GetDownloadPath(tag, asset.GetName())
 
 	// Link to all configured distributions
+	// For trusted storage, we use the source distribution structure (Feed), not the target.
+	// This allows the same file to be linked to multiple target distributions.
+	// Flat repos (Feed == "/") use "." as the distribution path, similar to APT behavior.
 	var downloadedFiles []*common.FileForTrust
 	for _, distMap := range s.options.Distributions {
+		// Determine distribution path for trusted storage based on source structure
+		dist := distMap.Feed
+		if dist == "/" {
+			dist = "."
+		}
+		
 		downloadedFiles = append(downloadedFiles, &common.FileForTrust{
 			Path:         filePath,
-			Distribution: distMap.Target,
+			Distribution: dist,
 			Hash:         hash,
 			Source:       pkg.Name,
 			Redirect:     relPath,

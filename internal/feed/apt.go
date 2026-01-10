@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -23,20 +22,83 @@ type Apt struct {
 	verifier   *debext.Verifier
 	storage    *common.Storage
 	pool       pond.Pool
-	baseURL    *url.URL
 }
 
-// NewApt creates a new APT feed
+// NewApt creates a single APT feed instance.
+// Feed expansion should be done at the app level before calling this.
 func NewApt(storage *common.Storage, verifier *debext.Verifier, options *FeedOptions, repository *common.RepositoryOptions, pool pond.Pool) (*Apt, error) {
-	// Use DownloadURL directly (already a parsed URL with scheme)
 	return &Apt{
 		options:    options,
 		repository: repository,
 		verifier:   verifier,
 		storage:    storage,
 		pool:       pool,
-		baseURL:    options.DownloadURL,
 	}, nil
+}
+
+// ExpandAptFeedOptions expands a single APT FeedOptions with prefix mappings
+// into multiple FeedOptions, one per distribution.
+func ExpandAptFeedOptions(options *FeedOptions) []*FeedOptions {
+	var expandedOptions []*FeedOptions
+
+	for _, distMap := range options.Distributions {
+		// Parse distribution mapping for prefix
+		// Format: "prefix/distname" or "/" for flat repo
+		var prefix, distName, targetDist string
+
+		if strings.Contains(distMap.Feed, "/") {
+			parts := strings.SplitN(distMap.Feed, "/", 2)
+			prefix = parts[0]
+			if len(parts) == 2 {
+				distName = parts[1]
+			}
+			// If no distName after "/", it's a flat repo
+			if distName == "" {
+				distName = "/"
+			}
+		} else {
+			// No prefix, use distribution name as-is
+			distName = distMap.Feed
+		}
+
+		// Determine target distribution
+		// If explicit target mapping exists, use it; otherwise use distName
+		if distMap.Target != "" {
+			targetDist = distMap.Target
+		} else {
+			targetDist = distName
+		}
+
+		// Build download URL
+		downloadURL := options.DownloadURL
+		if prefix != "" {
+			// Add prefix to URL path (even for flat repos with prefix like "Debian_12/")
+			downloadURL = options.DownloadURL.JoinPath(prefix)
+		}
+
+		// Build relative path for storage
+		relativePath := options.RelativePath
+		if prefix != "" {
+			// Add prefix to storage path to prevent collisions (even for flat repos)
+			relativePath = relativePath + "/" + prefix
+		}
+
+		// Create feed options for this single distribution
+		singleOptions := &FeedOptions{
+			Name:          downloadURL.Host + downloadURL.Path,
+			Type:          FeedTypeAPT,
+			DownloadURL:   downloadURL,
+			ProjectURL:    options.ProjectURL,
+			RelativePath:  relativePath,
+			Distributions: []DistributionMap{{Feed: distName, Target: targetDist}},
+			FromSources:   options.FromSources,
+			Packages:      options.Packages,
+		}
+
+		expandedOptions = append(expandedOptions, singleOptions)
+	}
+
+	return expandedOptions
 }
 
 // Run executes the complete download and verification process
@@ -72,11 +134,11 @@ func (s *Apt) processDist(ctx context.Context, distMap DistributionMap) error {
 	var releaseURL string
 
 	if isFlat {
-		// Flat repository: Release file is at baseURL/InRelease
-		releaseURL = s.baseURL.JoinPath("InRelease").String()
+		// Flat repository: Release file is at DownloadURL/InRelease
+		releaseURL = s.options.DownloadURL.JoinPath("InRelease").String()
 	} else {
-		// Standard repository: Release file is at baseURL/dists/dist/InRelease
-		releaseURL = s.baseURL.JoinPath("dists", distMap.Feed, "InRelease").String()
+		// Standard repository: Release file is at DownloadURL/dists/dist/InRelease
+		releaseURL = s.options.DownloadURL.JoinPath("dists", distMap.Feed, "InRelease").String()
 	}
 
 	releasePath := s.storage.GetDownloadPath(localPath, "InRelease")
@@ -172,7 +234,7 @@ func (s *Apt) processIndex(ctx context.Context, localPath string, indexPath stri
 	}
 
 	// Construct download URL
-	downloadURL := s.baseURL.JoinPath(urlPath, compressedPath).String()
+	downloadURL := s.options.DownloadURL.JoinPath(urlPath, compressedPath).String()
 	var result string
 
 	// Download and optionally decompress the index
@@ -260,7 +322,7 @@ func (s *Apt) downloadPackageFiles(ctx context.Context, dist string, packages []
 		for _, file := range pkg.Files() {
 			relPath := file.DownloadURL()
 			sha256 := file.Checksums.SHA256
-			pkgURL := s.baseURL.JoinPath(relPath).String()
+			pkgURL := s.options.DownloadURL.JoinPath(relPath).String()
 
 			// Allocate entry in results slice
 			idx := len(downloadedFiles)

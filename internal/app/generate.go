@@ -110,10 +110,14 @@ func (a *Application) generateRepository(ctx context.Context, repo *config.Repos
 	// Web composition will use the original feed list (repo.Feeds)
 	var expandedFeeds []*feed.FeedOptions
 	for _, feedOpts := range repo.Feeds {
-		if feed.FeedType(feedOpts.Type) == feed.FeedTypeOBS {
-			aptFeeds := feed.ExpandOBSFeed(feedOpts)
+		switch feed.FeedType(feedOpts.Type) {
+		case feed.FeedTypeOBS:
+			aptFeeds := feed.ExpandOBSFeedOptions(feedOpts)
 			expandedFeeds = append(expandedFeeds, aptFeeds...)
-		} else {
+		case feed.FeedTypeAPT:
+			aptFeeds := feed.ExpandAptFeedOptions(feedOpts)
+			expandedFeeds = append(expandedFeeds, aptFeeds...)
+		default:
 			expandedFeeds = append(expandedFeeds, feedOpts)
 		}
 	}

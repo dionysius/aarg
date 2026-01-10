@@ -79,9 +79,11 @@ feeds:
     #
     # Distributions must explicitly list what to fetch (cannot auto-discover)
     # distributions:
-    #   - noble                   # Normal repo: fetch "dists/noble/"
-    #   - "/": noble              # Flat repo: fetch root, map to "noble" (must be single entry)
-    #   - trixie: stable          # Fetch "dists/trixie/", map to "stable" in output
+    #   - noble                     # Normal repo: fetch "dists/noble/"
+    #   - "/": noble                # Flat repo: fetch root, map to "noble" (must be single entry)
+    #   - trixie: stable            # Fetch "dists/trixie/", map to "stable" in output
+    #   - debian/trixie: trixie     # Fetch "debian/dists/trixie/", map to "trixie" (prefix support)
+    #   - ubuntu/noble: noble       # Fetch "ubuntu/dists/noble/", map to "noble" (prefix support)
     #
     # Components (specifies which components to fetch)
     # If not defined: defaults to ["main"], ignored for flat repos

@@ -1,97 +1,31 @@
 package feed
 
-import (
-	"context"
-
-	"github.com/alitto/pond/v2"
-	"github.com/dionysius/aarg/debext"
-	"github.com/dionysius/aarg/internal/common"
-)
-
-// OBS handles OpenSUSE Build Service repository downloads
-// OBS repositories are structured as flat APT repositories per distribution
-type OBS struct {
-	options    *FeedOptions
-	repository *common.RepositoryOptions
-	verifier   *debext.Verifier
-	storage    *common.Storage
-	pool       pond.Pool
-}
-
-// NewOBS creates a new OBS feed
-func NewOBS(storage *common.Storage, verifier *debext.Verifier, options *FeedOptions, repository *common.RepositoryOptions, pool pond.Pool) (*OBS, error) {
-	return &OBS{
-		options:    options,
-		repository: repository,
-		verifier:   verifier,
-		storage:    storage,
-		pool:       pool,
-	}, nil
-}
-
-// Run executes the complete download and verification process
-// For each distribution, create a flat APT feed instance
-func (s *OBS) Run(ctx context.Context) error {
-	// Create subpool for OBS distribution processing
-	obsPool := s.pool.NewSubpool(10)
-	defer obsPool.StopAndWait()
-
-	group := obsPool.NewGroup()
-
-	// Expand OBS feed into APT feeds for each distribution
-	aptFeeds := ExpandOBSFeed(s.options)
-
-	// Submit tasks for each APT feed
-	for i, aptOptions := range aptFeeds {
-		// Capture for closure
-		opts := aptOptions
-		distMap := s.options.Distributions[i]
-
-		group.SubmitErr(func() error {
-			// Create and run an APT feed for this distribution
-			aptFeed, err := NewApt(s.storage.Scope(distMap.Feed), s.verifier, opts, s.repository, obsPool)
-			if err != nil {
-				return err
-			}
-
-			return aptFeed.Run(ctx)
-		})
+// ExpandOBSFeedOptions expands an OBS FeedOptions into flat APT FeedOptions,
+// one per distribution. OBS distributions are converted to APT prefix notation
+// where each OBS dist becomes a prefix with a flat repo (/).
+func ExpandOBSFeedOptions(options *FeedOptions) []*FeedOptions {
+	// Convert OBS distributions to APT prefix notation: "Debian_12" -> "Debian_12/"
+	aptOptions := &FeedOptions{
+		Name:          options.Name,
+		Type:          FeedTypeAPT,
+		DownloadURL:   options.DownloadURL,
+		ProjectURL:    options.ProjectURL,
+		RelativePath:  options.RelativePath,
+		FromSources:   options.FromSources,
+		Packages:      options.Packages,
+		Distributions: make([]DistributionMap, len(options.Distributions)),
 	}
 
-	// Wait for all tasks and return first error if any
-	return group.Wait()
-}
-
-// ExpandOBSFeed expands a single OBS feed into multiple APT feed configurations,
-// one for each distribution.
-func ExpandOBSFeed(obsFeed *FeedOptions) []*FeedOptions {
-	var aptFeeds []*FeedOptions
-
-	for _, distMap := range obsFeed.Distributions {
-		// Build download URL from parent's DownloadURL by appending distribution
-		downloadURL := obsFeed.DownloadURL.JoinPath(distMap.Feed)
-
-		// Build relative path from parent's RelativePath
-		relativePath := obsFeed.RelativePath + "/" + distMap.Feed
-
-		// Name is URL without scheme (host + path)
-		name := downloadURL.Host + downloadURL.Path
-
-		aptOptions := &FeedOptions{
-			Name:          name,
-			Type:          FeedTypeAPT,
-			DownloadURL:   downloadURL,
-			ProjectURL:    obsFeed.ProjectURL, // Keep original OBS project URL
-			RelativePath:  relativePath,
-			Distributions: []DistributionMap{{Feed: "/", Target: distMap.Target}},
-			FromSources:   obsFeed.FromSources,
-			Packages:      obsFeed.Packages,
+	for i, distMap := range options.Distributions {
+		// Convert "Debian_12" -> "Debian_12/" (prefix with flat repo)
+		aptOptions.Distributions[i] = DistributionMap{
+			Feed:   distMap.Feed + "/",
+			Target: distMap.Target,
 		}
-
-		aptFeeds = append(aptFeeds, aptOptions)
 	}
 
-	return aptFeeds
+	// Delegate to APT expansion which handles prefix logic
+	return ExpandAptFeedOptions(aptOptions)
 }
 
 // TODO: Support Ubuntu Debug Packages (.ddeb files)

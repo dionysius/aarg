@@ -43,43 +43,59 @@ func (a *Application) Fetch(ctx context.Context, repoNames []string) error {
 
 			slog.Info("Fetching", "repository", repo.Name, "feed", string(opts.Type)+":"+opts.Name)
 
-			group.SubmitErr(func() error {
-				feedType := feed.FeedType(opts.Type)
-				location := opts.Name
+			// Expand feed options based on type (OBS/APT with multiple distributions)
+			var expandedFeedOpts []*feed.FeedOptions
+			feedType := feed.FeedType(opts.Type)
+			switch feedType {
+			case feed.FeedTypeOBS:
+				expandedFeedOpts = feed.ExpandOBSFeedOptions(opts)
+			case feed.FeedTypeAPT:
+				expandedFeedOpts = feed.ExpandAptFeedOptions(opts)
+			case feed.FeedTypeGitHub:
+				// GitHub feeds don't expand
+				expandedFeedOpts = []*feed.FeedOptions{opts}
+			default:
+				return fmt.Errorf("unsupported feed type: %s", feedType)
+			}
 
-				// Create scoped storage for this feed
-				storage := common.NewStorage(
-					a.Downloader,
-					a.Config.Directories.GetDownloadsPath(),
-					a.Config.Directories.GetTrustedPath(),
-					opts.RelativePath,
-				)
+			// Create and submit a feed task for each expanded feed option
+			for _, expandedOpts := range expandedFeedOpts {
+				// Capture for closure
+				feedOpt := expandedOpts
 
-				// Create feed instance based on type
-				var feedInst feed.Feed
-				var err error
+				group.SubmitErr(func() error {
+					// Create scoped storage for this expanded feed
+					storage := common.NewStorage(
+						a.Downloader,
+						a.Config.Directories.GetDownloadsPath(),
+						a.Config.Directories.GetTrustedPath(),
+						feedOpt.RelativePath,
+					)
 
-				switch feedType {
-				case feed.FeedTypeGitHub:
-					feedInst, err = feed.NewGithub(storage, a.GitHubClient, feedVerifier, opts, &repo.RepositoryOptions, a.MainPool)
-				case feed.FeedTypeAPT:
-					feedInst, err = feed.NewApt(storage, feedVerifier, opts, &repo.RepositoryOptions, a.MainPool)
-				case feed.FeedTypeOBS:
-					feedInst, err = feed.NewOBS(storage, feedVerifier, opts, &repo.RepositoryOptions, a.MainPool)
-				default:
-					return fmt.Errorf("unsupported feed type: %s", feedType)
-				}
-				if err != nil {
-					return fmt.Errorf("failed to create feed %s: %w", location, err)
-				}
+					// Create feed instance based on type (after expansion, OBS becomes APT)
+					var feedInst feed.Feed
+					var err error
 
-				// Run feed download
-				if err := feedInst.Run(ctx); err != nil {
-					return fmt.Errorf("failed to run feed %s: %w", location, err)
-				}
+					switch feed.FeedType(feedOpt.Type) {
+					case feed.FeedTypeGitHub:
+						feedInst, err = feed.NewGithub(storage, a.GitHubClient, feedVerifier, feedOpt, &repo.RepositoryOptions, a.MainPool)
+					case feed.FeedTypeAPT:
+						feedInst, err = feed.NewApt(storage, feedVerifier, feedOpt, &repo.RepositoryOptions, a.MainPool)
+					default:
+						return fmt.Errorf("unsupported expanded feed type: %s", feedOpt.Type)
+					}
+					if err != nil {
+						return fmt.Errorf("failed to create feed %s: %w", feedOpt.Name, err)
+					}
 
-				return nil
-			})
+					// Run feed download
+					if err := feedInst.Run(ctx); err != nil {
+						return fmt.Errorf("failed to run feed %s: %w", feedOpt.Name, err)
+					}
+
+					return nil
+				})
+			}
 		}
 	}
 

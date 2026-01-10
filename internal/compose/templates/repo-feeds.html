@@ -17,8 +17,8 @@
                 <img src="{{$.AssetsPath}}assets/icons/{{.Icon}}.svg" alt="{{.Type.String}}" class="h-8 w-8 flex-shrink-0">
                 {{end}}
                 <div class="flex-1 min-w-0">
-                    <p class="font-medium text-gray-900 dark:text-white">{{.Type.String | title}}</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{.DisplayPath}}</p>
+                    <p class="font-medium text-gray-900 dark:text-white">{{.Type.String}}: {{.Name}}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{.Subtitle}}</p>
                     {{if .Details}}
                     <div class="mt-2 space-y-1">
                         {{range .Details}}
