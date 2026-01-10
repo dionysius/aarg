@@ -197,6 +197,7 @@ func (a *Application) generateWeb(ctx context.Context, repo *config.RepositoryCo
 			Name:   repo.Name,
 			Feeds:  repo.Feeds,
 		},
+		Description:      repo.Description,
 		Repository:       &repo.RepositoryOptions,
 		BaseURL:          a.Config.URL,
 		Downloads:        a.Config.Directories.GetDownloadsPath(),

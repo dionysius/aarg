@@ -1,6 +1,15 @@
 # Note filename = repo name (without .yaml)
 
-# Package options
+# Optional: Markdown-formatted description displayed on the repository web page
+# Supports GitHub-flavored markdown (headings, bold, italic, links, code blocks, tables, etc.)
+# description: |
+#   # My Repository
+#   
+#   This repository contains **packages** for various distributions.
+#   
+#   For more info, visit [example.com](https://example.com).
+
+# Package options - controls which package types are included in the repository
 packages:
   # Primary package to use for distribution sorting (default: repository name)
   # primary: "vaultwarden-web-vault"

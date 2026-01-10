@@ -17,6 +17,7 @@ type PackageOptions struct {
 
 // RepositoryConfig options which can be relevant for feeds to download only requested packages
 type RepositoryOptions struct {
+	// Packages controls which package types are included
 	Packages PackageOptions `yaml:"packages,omitempty"`
 	// Distributions to fetch and process
 	Distributions []string `yaml:"distributions,omitempty"`

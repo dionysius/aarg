@@ -18,6 +18,10 @@ import (
 	"github.com/dionysius/aarg/internal/common"
 	"github.com/dionysius/aarg/internal/feed"
 	"github.com/google/go-github/v80/github"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 	"gopkg.in/yaml.v3"
 )
 
@@ -422,6 +426,7 @@ type RepositoryLink struct {
 type RepositoryPageData struct {
 	ComposeOptions    *ComposeOptions
 	RepositoryOptions *common.RepositoryOptions
+	DescriptionHTML   template.HTML // Rendered markdown description
 	BaseURL           string // Base URL for the repository
 	Repository        *debext.Repository
 	AssetsPath        string                 // Relative path to assets directory
@@ -488,9 +493,32 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		w.options.Repository.Distributions = repo.GetDistributions()
 	}
 
+	// Render markdown description if present
+	var descriptionHTML template.HTML
+	if w.options.Description != "" {
+		md := goldmark.New(
+			goldmark.WithExtensions(
+				extension.GFM,
+				extension.Linkify,
+			),
+			goldmark.WithParserOptions(
+				parser.WithAutoHeadingID(),
+			),
+			goldmark.WithRendererOptions(
+				html.WithUnsafe(), // Allow raw HTML in markdown
+			),
+		)
+		var buf bytes.Buffer
+		if err := md.Convert([]byte(w.options.Description), &buf); err != nil {
+			return fmt.Errorf("failed to render description markdown: %w", err)
+		}
+		descriptionHTML = template.HTML(buf.String())
+	}
+
 	data := RepositoryPageData{
 		ComposeOptions:    &w.options.ComposeOptions,
 		RepositoryOptions: w.options.Repository,
+		DescriptionHTML:   descriptionHTML,
 		BaseURL:           w.options.BaseURL,
 		Repository:        repo,
 		AssetsPath:        "../", // Repository pages are in subdirectories, so need ../ to reach assets
@@ -509,6 +537,7 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		"templates/nav.html",
 		"templates/repository.html",
 		"templates/repo-header.html",
+		"templates/repo-description.html",
 		"templates/repo-feeds.html",
 		"templates/repo-installation.html",
 		"templates/repo-packages.html",

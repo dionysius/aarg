@@ -173,9 +173,11 @@ type WorkersConfig struct {
 // RepositoryConfig represents a single repository configuration
 type RepositoryConfig struct {
 	Name                     string `yaml:"-"` // Derived from filename
+	// Description is a markdown-formatted description of the repository (GitHub-flavored markdown)
+	Description              string                  `yaml:"description,omitempty"`
 	common.RepositoryOptions `yaml:",inline"`
-	Verification             VerificationConfig  `yaml:"verification,omitempty"`
-	Feeds                    []*feed.FeedOptions `yaml:"feeds"`
+	Verification             VerificationConfig      `yaml:"verification,omitempty"`
+	Feeds                    []*feed.FeedOptions     `yaml:"feeds"`
 }
 
 // VerificationConfig contains package verification settings

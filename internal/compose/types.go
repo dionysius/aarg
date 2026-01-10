@@ -36,6 +36,9 @@ type AptComposeOptions struct {
 type WebComposeOptions struct {
 	ComposeOptions
 
+	// Description is a markdown-formatted description of the repository
+	Description string
+
 	// Repository contains the repository configuration
 	Repository *common.RepositoryOptions
 

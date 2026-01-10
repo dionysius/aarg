@@ -1,0 +1,10 @@
+{{define "repo-description"}}
+{{if .DescriptionHTML}}
+<!-- Repository Description -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div class="p-6 prose prose-slate dark:prose-invert max-w-none prose-headings:font-semibold prose-h1:text-lg prose-h1:leading-6 prose-h2:text-base prose-h2:leading-5 prose-h3:text-sm prose-h3:leading-5 prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-normal prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-white prose-code:text-gray-900 dark:prose-code:text-gray-100 prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-li:leading-snug prose-ul:my-3 prose-ol:my-3 prose-li:my-0.5 prose-table:text-sm prose-th:py-2 prose-td:py-1.5">
+        {{.DescriptionHTML}}
+    </div>
+</div>
+{{end}}
+{{end}}
