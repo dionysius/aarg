@@ -484,7 +484,12 @@ func (a *Apt) processFeedPackageFile(feedOpts *feed.FeedOptions, relPath string,
 
 	// Filter by architecture if specified
 	if len(a.options.Repository.Architectures) > 0 {
-		if !slices.Contains(append(a.options.Repository.Architectures, debext.AllArchitecture), pkg.Architecture) {
+		allowedArchs := append(a.options.Repository.Architectures, debext.AllArchitecture)
+		// Always allow source architecture if source packages are enabled
+		if a.options.Repository.Packages.Source {
+			allowedArchs = append(allowedArchs, debext.SourceArchitecture)
+		}
+		if !slices.Contains(allowedArchs, pkg.Architecture) {
 			return nil
 		}
 	}

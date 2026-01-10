@@ -12,7 +12,6 @@
     <div class="p-6">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {{range .Feeds}}
-            {{if .URL}}
             <a href="{{.URL}}" target="_blank" rel="noopener noreferrer" class="flex items-start space-x-3 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 {{if .Icon}}
                 <img src="{{$.AssetsPath}}assets/icons/{{.Icon}}.svg" alt="{{.Type.String}}" class="h-8 w-8 flex-shrink-0">
@@ -23,31 +22,22 @@
                     {{if .Details}}
                     <div class="mt-2 space-y-1">
                         {{range .Details}}
-                        <p class="text-xs text-gray-600 dark:text-gray-400">{{.}}</p>
+                        {{if .Hover}}
+                        <p class="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1" title="{{.Hover}}">
+                            <span>{{.Text}}</span>
+                            {{if .Warning}}
+                            <svg class="h-3 w-3 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            {{end}}
+                        </p>
+                        {{else}}
+                        <p class="text-xs text-gray-600 dark:text-gray-400">{{.Text}}</p>
+                        {{end}}
                         {{end}}
                     </div>
                     {{end}}
                 </div>
                 <svg class="h-5 w-5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
             </a>
-            {{else}}
-            <div class="flex items-start space-x-3 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                {{if .Icon}}
-                <img src="{{$.AssetsPath}}assets/icons/{{.Icon}}.svg" alt="{{.Type}}" class="h-8 w-8 flex-shrink-0">
-                {{end}}
-                <div class="flex-1 min-w-0">
-                    <p class="font-medium text-gray-900 dark:text-white">{{.Type | title}}</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{.DisplayPath}}</p>
-                    {{if .Details}}
-                    <div class="mt-2 space-y-1">
-                        {{range .Details}}
-                        <p class="text-xs text-gray-600 dark:text-gray-400">{{.}}</p>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-            {{end}}
             {{end}}
         </div>
     </div>

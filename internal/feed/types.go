@@ -58,8 +58,9 @@ type FeedOptions struct {
 	RelativePath string   // Relative path for downloads and trusted directory
 
 	// GitHub-specific
-	Releases []ReleaseType // Release types to include
-	Tags     []string      // Tag name filters (glob patterns, ! prefix for negation)
+	Releases  []ReleaseType // Release types to include
+	Tags      []string      // Tag name filters (glob patterns, ! prefix for negation)
+	NoChanges bool          // Skip .changes files and directly download package files (requires dist mapping)
 
 	// Common to all feeds
 	Distributions []DistributionMap // Distribution mappings from feed to target repository
@@ -140,6 +141,7 @@ func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 		OBS           *string           `yaml:"obs"`
 		Releases      []ReleaseType     `yaml:"releases"`
 		Tags          []string          `yaml:"tags"`
+		NoChanges     bool              `yaml:"no_changes"`
 		Components    []string          `yaml:"components"`
 		Distributions []DistributionMap `yaml:"distributions"`
 		FromSources   []string          `yaml:"from_sources"`
@@ -219,6 +221,7 @@ func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 	// Set other fields
 	f.Releases = aux.Releases
 	f.Tags = aux.Tags
+	f.NoChanges = aux.NoChanges
 	f.Distributions = aux.Distributions
 	f.FromSources = aux.FromSources
 	f.Packages = aux.Packages
@@ -266,6 +269,9 @@ func (f FeedOptions) MarshalYAML() (any, error) {
 	}
 	if len(f.Tags) > 0 {
 		output["tags"] = f.Tags
+	}
+	if f.NoChanges {
+		output["no_changes"] = true
 	}
 
 	return output, nil

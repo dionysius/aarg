@@ -32,7 +32,7 @@ type Github struct {
 	verifier   *debext.Verifier
 	storage    *common.Storage
 	pool       pond.Pool
-	collector  *common.GenericRetentionCollector[githubChanges]
+	collector  any // Either *GenericRetentionCollector[githubChanges] or *GenericRetentionCollector[githubBinaryPackage]
 }
 
 // NewGithub creates a new Github feed
@@ -45,6 +45,14 @@ func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.
 	owner := parts[0]
 	repo := parts[1]
 
+	// Choose collector type based on no_changes mode
+	var collector any
+	if options.NoChanges {
+		collector = newGithubBinaryPackageRetentionCollector(repository.Retention)
+	} else {
+		collector = newGithubChangesRetentionCollector(repository.Retention)
+	}
+
 	return &Github{
 		options:    options,
 		repository: repository,
@@ -54,12 +62,17 @@ func NewGithub(storage *common.Storage, client *github.Client, verifier *debext.
 		verifier:   verifier,
 		storage:    storage,
 		pool:       pool,
-		collector:  newGithubChangesRetentionCollector(repository.Retention),
+		collector:  collector,
 	}, nil
 }
 
 // Run executes the complete download and verification process
 func (s *Github) Run(ctx context.Context) error {
+	// Log warning if no_changes mode is enabled
+	if s.options.NoChanges {
+		slog.Warn("Processing feed in no_changes mode - packages downloaded without signature verification", "feed", s.options.Name)
+	}
+
 	// Create subpool for release processing (limit concurrent releases)
 	releasePool := s.pool.NewSubpool(10)
 	defer releasePool.StopAndWait()
@@ -97,24 +110,41 @@ func (s *Github) Run(ctx context.Context) error {
 		opt.Page = resp.NextPage
 	}
 
-	// Wait for all releases to be processed (adds .changes files to collector)
+	// Wait for all releases to be processed (adds packages to collector)
 	if err := group.Wait(); err != nil {
 		return err
 	}
 
-	// Now process all kept .changes files according to retention policies
-	changesPool := s.pool.NewSubpool(10)
-	defer changesPool.StopAndWait()
+	// Process all kept packages according to retention policies
+	packagePool := s.pool.NewSubpool(10)
+	defer packagePool.StopAndWait()
 
-	group = changesPool.NewGroup()
-	keptChanges, err := s.collector.Kept()
-	if err != nil {
-		return err
-	}
-	for _, pkg := range keptChanges {
-		group.SubmitErr(func() error {
-			return s.processKeptChangesFile(ctx, pkg.changes, pkg.release)
-		})
+	group = packagePool.NewGroup()
+
+	if s.options.NoChanges {
+		// In no_changes mode, process kept binary packages
+		binaryCollector := s.collector.(*common.GenericRetentionCollector[githubBinaryPackage])
+		keptPackages, err := binaryCollector.Kept()
+		if err != nil {
+			return err
+		}
+		for _, pkg := range keptPackages {
+			group.SubmitErr(func() error {
+				return s.processKeptBinaryPackageNoChanges(ctx, pkg)
+			})
+		}
+	} else {
+		// Normal mode: process kept .changes files
+		changesCollector := s.collector.(*common.GenericRetentionCollector[githubChanges])
+		keptChanges, err := changesCollector.Kept()
+		if err != nil {
+			return err
+		}
+		for _, pkg := range keptChanges {
+			group.SubmitErr(func() error {
+				return s.processKeptChangesFile(ctx, pkg.changes, pkg.release)
+			})
+		}
 	}
 
 	return group.Wait()
@@ -125,6 +155,12 @@ type githubChanges struct {
 	release *github.RepositoryRelease
 }
 
+type githubBinaryPackage struct {
+	pkg     *deb.Package
+	release *github.RepositoryRelease
+	asset   *github.ReleaseAsset
+}
+
 func (s *Github) processRelease(ctx context.Context, release *github.RepositoryRelease) error {
 	// Create subpool for processing .changes files in this release
 	changesPool := s.pool.NewSubpool(10)
@@ -132,12 +168,26 @@ func (s *Github) processRelease(ctx context.Context, release *github.RepositoryR
 
 	group := changesPool.NewGroup()
 
-	// Find .changes files in this release
-	for _, asset := range release.Assets {
-		if strings.HasSuffix(asset.GetName(), ".changes") {
-			group.SubmitErr(func() error {
-				return s.processChangesFile(ctx, asset, release)
-			})
+	// Check if no_changes mode is enabled
+	if s.options.NoChanges {
+		// In no_changes mode, directly process package files without .changes
+		for _, asset := range release.Assets {
+			assetName := asset.GetName()
+			// Process .deb files (binary packages only in no_changes mode)
+			if strings.HasSuffix(assetName, ".deb") {
+				group.SubmitErr(func() error {
+					return s.processPackageFileNoChanges(ctx, asset, release)
+				})
+			}
+		}
+	} else {
+		// Normal mode: Find .changes files in this release
+		for _, asset := range release.Assets {
+			if strings.HasSuffix(asset.GetName(), ".changes") {
+				group.SubmitErr(func() error {
+					return s.processChangesFile(ctx, asset, release)
+				})
+			}
 		}
 	}
 
@@ -180,7 +230,8 @@ func (s *Github) processChangesFile(ctx context.Context, changesAsset *github.Re
 	}
 
 	// Add changes file to collector (changes files go in main component)
-	if err := s.collector.Add(dist, common.MainComponent, githubChanges{changes: changes, release: release}); err != nil {
+	changesCollector := s.collector.(*common.GenericRetentionCollector[githubChanges])
+	if err := changesCollector.Add(dist, common.MainComponent, githubChanges{changes: changes, release: release}); err != nil {
 		return err
 	}
 
@@ -253,6 +304,80 @@ func (s *Github) processKeptChangesFile(ctx context.Context, changes *deb.Change
 	var downloadedFiles []*common.FileForTrust
 	for _, files := range fileResults {
 		downloadedFiles = append(downloadedFiles, files...)
+	}
+
+	return s.storage.LinkFilesToTrusted(ctx, downloadedFiles)
+}
+
+// processPackageFileNoChanges handles binary package files in no_changes mode
+func (s *Github) processPackageFileNoChanges(ctx context.Context, asset *github.ReleaseAsset, release *github.RepositoryRelease) error {
+	tag := release.GetTagName()
+	assetName := asset.GetName()
+
+	// Download package file using GitHub digest
+	algo, hash := ParseGitHubDigest(asset.GetDigest())
+	filePath, err := s.storage.FileExistsOrDownload(ctx, algo, hash, asset.GetBrowserDownloadURL(), tag, assetName)
+	if err != nil {
+		return err
+	}
+
+	// Parse .deb file to extract metadata
+	pkg, err := debext.ParseBinary(filePath, "")
+	if err != nil {
+		return err
+	}
+
+	// Filter: Skip debug packages (not supported in no_changes mode)
+	if debext.IsDebugPackage(pkg) {
+		return nil
+	}
+
+	// Filter: Check if package should be included
+	if !common.MatchesGlobPatterns(s.options.Packages, pkg.Name) {
+		return nil
+	}
+
+	// Add to collector for retention processing
+	// Use first target distribution for grouping since no_changes mode requires explicit dist mappings
+	dist := s.options.Distributions[0].Target
+	binaryCollector := s.collector.(*common.GenericRetentionCollector[githubBinaryPackage])
+	return binaryCollector.Add(dist, common.MainComponent, githubBinaryPackage{
+		pkg:     pkg,
+		release: release,
+		asset:   asset,
+	})
+}
+
+// processKeptBinaryPackageNoChanges links a retained binary package to all configured distributions
+func (s *Github) processKeptBinaryPackageNoChanges(ctx context.Context, pkgData githubBinaryPackage) error {
+	pkg := pkgData.pkg
+	asset := pkgData.asset
+
+	// Get hash from asset
+	_, hash := ParseGitHubDigest(asset.GetDigest())
+
+	// Prepare redirect path
+	assetURL := asset.GetBrowserDownloadURL()
+	downloadURL := s.options.DownloadURL.String() + "/"
+	if !strings.HasPrefix(assetURL, downloadURL) {
+		return fmt.Errorf("asset URL %q does not start with expected download URL %q", assetURL, downloadURL)
+	}
+	relPath := strings.TrimPrefix(assetURL, downloadURL)
+
+	// Get the file path from storage
+	tag := pkgData.release.GetTagName()
+	filePath := s.storage.GetDownloadPath(tag, asset.GetName())
+
+	// Link to all configured distributions
+	var downloadedFiles []*common.FileForTrust
+	for _, distMap := range s.options.Distributions {
+		downloadedFiles = append(downloadedFiles, &common.FileForTrust{
+			Path:         filePath,
+			Distribution: distMap.Target,
+			Hash:         hash,
+			Source:       pkg.Name,
+			Redirect:     relPath,
+		})
 	}
 
 	return s.storage.LinkFilesToTrusted(ctx, downloadedFiles)
@@ -422,6 +547,21 @@ func newGithubChangesRetentionCollector(
 		retention,
 		func(pkg githubChanges) (string, string, string, string) {
 			return pkg.changes.Source, pkg.changes.Source, debext.SourceArchitecture, pkg.changes.GetField("Version")
+		},
+	)
+}
+
+// newGithubBinaryPackageRetentionCollector creates a collector for githubBinaryPackage items
+// grouping by package name and architecture
+func newGithubBinaryPackageRetentionCollector(
+	retention []common.RetentionPolicy,
+) *common.GenericRetentionCollector[githubBinaryPackage] {
+	return common.NewGenericRetentionCollector(
+		retention,
+		func(pkg githubBinaryPackage) (string, string, string, string) {
+			// Get source name from package
+			sourceName := debext.GetSourceNameFromPackage(pkg.pkg)
+			return pkg.pkg.Name, sourceName, pkg.pkg.Architecture, pkg.pkg.Version
 		},
 	)
 }

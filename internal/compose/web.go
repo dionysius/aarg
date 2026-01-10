@@ -400,13 +400,20 @@ type RepositoryInfo struct {
 }
 
 // FeedInfo contains information about a feed for template rendering
+type FeedDetail struct {
+	Text    string // Detail text to display
+	Hover   string // Optional tooltip text (empty if no tooltip)
+	Warning bool   // Whether to show a warning icon
+}
+
 type FeedInfo struct {
 	Type        feed.FeedType
-	Path        string   // Storage path (used internally)
-	DisplayPath string   // Path to display to users (shortened for OBS)
-	URL         string   // URL to the feed source
-	Icon        string   // Icon filename without extension
-	Details     []string // Formatted details to display (distributions, filters, etc.)
+	Path        string       // Storage path (used internally)
+	DisplayPath string       // Path to display to users (shortened for OBS)
+	URL         string       // URL to the feed source
+	Icon        string       // Icon filename without extension
+	Details     []FeedDetail // Formatted details to display (distributions, filters, etc.)
+	NoChanges   bool         // Whether this feed uses no_changes mode (no signature verification)
 }
 
 // IndexData contains data for the root index page
@@ -427,7 +434,7 @@ type RepositoryPageData struct {
 	ComposeOptions    *ComposeOptions
 	RepositoryOptions *common.RepositoryOptions
 	DescriptionHTML   template.HTML // Rendered markdown description
-	BaseURL           string // Base URL for the repository
+	BaseURL           string        // Base URL for the repository
 	Repository        *debext.Repository
 	AssetsPath        string                 // Relative path to assets directory
 	Tables            []PreparedPackageTable // Pre-computed package tables
@@ -662,7 +669,7 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 		}
 
 		// Build details list
-		details := []string{} // Add distribution mappings if present
+		details := []FeedDetail{} // Add distribution mappings if present
 		if len(feedOpts.Distributions) > 0 {
 			distStrs := make([]string, len(feedOpts.Distributions))
 			for i, dm := range feedOpts.Distributions {
@@ -672,7 +679,7 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 					distStrs[i] = dm.Feed + " -> " + dm.Target
 				}
 			}
-			details = append(details, "Distributions: "+strings.Join(distStrs, ", "))
+			details = append(details, FeedDetail{Text: "Distributions: " + strings.Join(distStrs, ", ")})
 		}
 
 		// GitHub-specific details
@@ -680,25 +687,34 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 			if len(feedOpts.Tags) > 0 {
 				tagStrs := make([]string, len(feedOpts.Tags))
 				copy(tagStrs, feedOpts.Tags)
-				details = append(details, "Tags: "+strings.Join(tagStrs, ", "))
+				details = append(details, FeedDetail{Text: "Tags: " + strings.Join(tagStrs, ", ")})
 			}
 			if len(feedOpts.Releases) > 0 {
 				releaseStrs := make([]string, len(feedOpts.Releases))
 				for i, rt := range feedOpts.Releases {
 					releaseStrs[i] = string(rt)
 				}
-				details = append(details, "Releases: "+strings.Join(releaseStrs, ", "))
+				details = append(details, FeedDetail{Text: "Releases: " + strings.Join(releaseStrs, ", ")})
 			}
 		}
 
 		// Source filtering
 		if len(feedOpts.FromSources) > 0 {
-			details = append(details, "From sources: "+strings.Join(feedOpts.FromSources, ", "))
+			details = append(details, FeedDetail{Text: "From sources: " + strings.Join(feedOpts.FromSources, ", ")})
 		}
 
 		// Package filtering
 		if len(feedOpts.Packages) > 0 {
-			details = append(details, "Packages: "+strings.Join(feedOpts.Packages, ", "))
+			details = append(details, FeedDetail{Text: "Packages: " + strings.Join(feedOpts.Packages, ", ")})
+		}
+
+		// No changes mode indicator
+		if feedOpts.NoChanges {
+			details = append(details, FeedDetail{
+				Text:    "No changes mode",
+				Hover:   "Feed does not produce signed .changes file, packages are parsed without signature verification. Checksums are still verified against the github release asset digest if available.",
+				Warning: true,
+			})
 		}
 
 		feeds = append(feeds, FeedInfo{
@@ -708,6 +724,7 @@ func (w *Web) prepareFeedInfo() []FeedInfo {
 			URL:         feedOpts.ProjectURL.String(),
 			Icon:        icon,
 			Details:     details,
+			NoChanges:   feedOpts.NoChanges,
 		})
 	}
 	return feeds

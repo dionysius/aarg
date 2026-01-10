@@ -35,6 +35,7 @@ var (
 	ErrFeedLocationQuery      = errors.New("feed location cannot contain query strings")
 	ErrFeedLocationFragment   = errors.New("feed location cannot contain fragments")
 	ErrPoolModeInvalid        = errors.New("pool mode must be either 'hierarchical' or 'redirect'")
+	ErrNoChangesRequiresDist  = errors.New("no_changes requires distribution mappings to be configured")
 )
 
 // validate performs validation on the loaded configuration
@@ -164,6 +165,14 @@ func validateFeed(feedOpts *feed.FeedOptions) error {
 	// Disallow fragments
 	if u.Fragment != "" {
 		return fmt.Errorf("%w: %s", ErrFeedLocationFragment, name)
+	}
+
+	// Validate GitHub-specific options
+	if feedType == feed.FeedTypeGitHub {
+		// no_changes requires distribution mappings
+		if feedOpts.NoChanges && len(feedOpts.Distributions) == 0 {
+			return fmt.Errorf("%w: %s", ErrNoChangesRequiresDist, name)
+		}
 	}
 
 	return nil
