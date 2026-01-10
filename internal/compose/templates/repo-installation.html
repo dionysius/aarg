@@ -235,7 +235,7 @@ sudo apt install ...</code></pre>
 
         // Manual key installation
         const keyCmd = `sudo mkdir -p /etc/apt/keyrings
-curl -fsSL ${baseURL}/keys/signing-key.gpg -o /etc/apt/keyrings/${keyringName}.gpg`;
+curl -fsSL ${baseURL}/keys/signing-key.gpg | sudo tee /etc/apt/keyrings/${keyringName}.gpg  > /dev/null`;
         document.getElementById('manual-key-command').textContent = keyCmd;
 
         // Manual sources configuration (new DEB822 format)
