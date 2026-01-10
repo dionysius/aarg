@@ -16,6 +16,7 @@ import (
 	"github.com/aptly-dev/aptly/deb"
 	"github.com/dionysius/aarg/debext"
 	"github.com/dionysius/aarg/internal/common"
+	"github.com/dionysius/aarg/internal/config"
 	"github.com/dionysius/aarg/internal/feed"
 	"github.com/google/go-github/v80/github"
 	"github.com/yuin/goldmark"
@@ -441,6 +442,7 @@ type RepositoryPageData struct {
 	Feeds             []FeedInfo             // Feed display info with icons
 	PageTitle         string                 // Title for the navigation bar
 	KeyringName       string                 // Keyring filename (sanitized domain)
+	RepositoryIcon    string                 // Repository icon filename (without extension) or empty for letter box
 }
 
 // DirectoryListingData contains data for a directory browsing page
@@ -479,7 +481,34 @@ func NewWeb(options *WebComposeOptions, downloader *common.Downloader) (*Web, er
 
 // Compose generates the static HTML page for a single repository
 func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
-	// Ensure icons are available
+	// Determine repository icon
+	var repoIconName string
+	if repoConfig, ok := w.options.RepositoryConfig.(*config.RepositoryConfig); ok && repoConfig.Icon != "" {
+		// Use explicitly configured icon
+		repoIconName = repoConfig.Icon
+	} else {
+		// Try repository name as fallback
+		repoIconName = w.options.Name
+	}
+	
+	// Try to ensure repository icon is available
+	var repoIcon string
+	if iconURL, exists := w.options.IconURLs[repoIconName]; exists {
+		// Icon URL explicitly configured, try to download it
+		if err := w.ensureIcon(ctx, repoIconName, iconURL); err == nil {
+			repoIcon = repoIconName
+		}
+		// If download fails, fall back to letter box (repoIcon stays empty)
+	} else {
+		// Try default simpleicons URL
+		defaultIconURL := "https://cdn.simpleicons.org/" + repoIconName
+		if err := w.ensureIcon(ctx, repoIconName, defaultIconURL); err == nil {
+			repoIcon = repoIconName
+		}
+		// If download fails, fall back to letter box (repoIcon stays empty)
+	}
+	
+	// Ensure feed icons are available
 	if err := w.ensureIcons(ctx); err != nil {
 		return err
 	}
@@ -533,6 +562,7 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		Feeds:             w.prepareFeedInfo(),
 		PageTitle:         "APT Repositories",
 		KeyringName:       keyringName,
+		RepositoryIcon:    repoIcon,
 	}
 
 	// Render template by executing base.html which will use the repository.html blocks

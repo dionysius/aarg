@@ -103,12 +103,16 @@ web:
     # Leave empty or omit to automatically use the latest release
     # release: "v4.0.0"
 
-  # Custom icon URLs for feed types (optional)
-  # Defaults are provided for: github, debian, opensuse
+  # Custom icon URLs for feed types and repositories (optional)
+  # Defaults are provided for feed types: github, debian, opensuse
+  # Repository icons use simpleicons.org by default, can be overridden here
+  # Repository icon names come from the 'icon' field in repository config (or default to repository name)
   # icon_urls:
   #   github: "https://cdn.simpleicons.org/github"
   #   apt: "https://cdn.simpleicons.org/debian"
   #   obs: "https://cdn.simpleicons.org/opensuse"
+  #   # Override repository icons by name:
+  #   myrepo: "https://example.com/custom-icon.svg"
 
 # Worker pool configuration (optional)
 # Controls parallelism for different types of operations

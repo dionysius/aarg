@@ -1,5 +1,11 @@
 # Note filename = repo name (without .yaml)
 
+# Optional: Icon for the repository (default: uses repository name to find icon)
+# Uses simpleicons.org icon names. Icons are cached locally after first download.
+# Override icon URLs in global config.yaml's web.icon_urls section.
+# If icon download fails, falls back to a letter box with the first letter of the repository name.
+# icon: "debian"
+
 # Optional: Markdown-formatted description displayed on the repository web page
 # Supports GitHub-flavored markdown (headings, bold, italic, links, code blocks, tables, etc.)
 # description: |

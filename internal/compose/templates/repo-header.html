@@ -3,9 +3,15 @@
 <div>
     <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
+            {{if .RepositoryIcon}}
+            <div class="h-16 w-16 rounded-lg bg-white dark:bg-gray-800 p-2 flex items-center justify-center">
+                <img src="{{.AssetsPath}}assets/icons/{{.RepositoryIcon}}.svg" alt="{{.ComposeOptions.Name}}" class="h-full w-full">
+            </div>
+            {{else}}
             <div class="h-16 w-16 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center">
                 <span class="text-white font-bold text-2xl">{{substr 0 1 .ComposeOptions.Name | upper}}</span>
             </div>
+            {{end}}
             <div>
                 <h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{.ComposeOptions.Name}}</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">APT Repository</p>
