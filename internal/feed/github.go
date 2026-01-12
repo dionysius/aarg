@@ -379,7 +379,7 @@ func (s *Github) processKeptBinaryPackageNoChanges(ctx context.Context, pkgData 
 		if dist == "/" {
 			dist = "."
 		}
-		
+
 		downloadedFiles = append(downloadedFiles, &common.FileForTrust{
 			Path:         filePath,
 			Distribution: dist,

@@ -74,6 +74,7 @@ func (m *Downloader) download(ctx context.Context, req *DownloadRequest) (*Downl
 
 	// Apply context to grab request
 	grabReq = grabReq.WithContext(ctx)
+	grabReq.NoResume = true
 
 	// Configure checksum verification if provided
 	if req.Checksum != "" {
@@ -93,11 +94,11 @@ func (m *Downloader) download(ctx context.Context, req *DownloadRequest) (*Downl
 	<-resp.Done
 
 	if resp.Err() != nil {
-		return nil, fmt.Errorf("%s: %w", filepath.Base(req.Destination), resp.Err())
+		return nil, fmt.Errorf("%s (from %s): %w", filepath.Base(req.Destination), req.URL, resp.Err())
 	}
 
 	// Log successful download
-	slog.Debug("Downloaded", "file", filepath.Base(req.Destination), "bytes", resp.Size())
+	slog.Info("Downloaded", "file", filepath.Base(req.Destination), "bytes", resp.Size())
 
 	return &DownloadResult{
 		DownloadRequest: req,

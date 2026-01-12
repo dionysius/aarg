@@ -85,7 +85,7 @@ func ExpandAptFeedOptions(options *FeedOptions) []*FeedOptions {
 
 		// Create feed options for this single distribution
 		singleOptions := &FeedOptions{
-			Name:          downloadURL.Host + downloadURL.Path,
+			Name:          relativePath,
 			Type:          FeedTypeAPT,
 			DownloadURL:   downloadURL,
 			ProjectURL:    options.ProjectURL,
