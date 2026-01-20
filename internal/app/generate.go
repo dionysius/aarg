@@ -104,7 +104,7 @@ func (a *Application) Generate(ctx context.Context, repoNames []string) (err err
 
 // generateRepository generates a single repository (APT + web)
 func (a *Application) generateRepository(ctx context.Context, repo *config.RepositoryConfig, stagingPath string) error {
-	slog.Info("Generating repository", "repository", repo.Name)
+	slog.Info("Generating", "repository", repo.Name)
 
 	// Expand OBS feeds into APT feeds for APT composition
 	// Web composition will use the original feed list (repo.Feeds)

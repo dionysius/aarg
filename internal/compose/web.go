@@ -490,7 +490,7 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		// Try repository name as fallback
 		repoIconName = w.options.Name
 	}
-	
+
 	// Try to ensure repository icon is available
 	var repoIcon string
 	if iconURL, exists := w.options.IconURLs[repoIconName]; exists {
@@ -507,7 +507,7 @@ func (w *Web) Compose(ctx context.Context, repo *debext.Repository) error {
 		}
 		// If download fails, fall back to letter box (repoIcon stays empty)
 	}
-	
+
 	// Ensure feed icons are available
 	if err := w.ensureIcons(ctx); err != nil {
 		return err

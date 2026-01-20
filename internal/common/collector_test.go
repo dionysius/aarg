@@ -46,11 +46,11 @@ func TestGenericRetentionCollector(t *testing.T) {
 				[]RetentionPolicy{
 					{
 						RetentionRule: RetentionRule{Pattern: "*.*.*-#", Amount: []int{2}},
-						FromSources:     []string{"nginx"},
+						FromSources:   []string{"nginx"},
 					},
 					{
 						RetentionRule: RetentionRule{Pattern: "*.*.*-#", Amount: []int{1}},
-						FromSources:     []string{"php"},
+						FromSources:   []string{"php"},
 					},
 				},
 			)
@@ -82,7 +82,7 @@ func TestGenericRetentionCollector(t *testing.T) {
 				[]RetentionPolicy{
 					{
 						RetentionRule: RetentionRule{Pattern: "*.*.*-#", Amount: []int{1}},
-						FromSources:     []string{"nginx"}, // only nginx has retention
+						FromSources:   []string{"nginx"}, // only nginx has retention
 					},
 				},
 			)

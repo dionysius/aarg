@@ -172,15 +172,15 @@ type WorkersConfig struct {
 
 // RepositoryConfig represents a single repository configuration
 type RepositoryConfig struct {
-	Name                     string `yaml:"-"` // Derived from filename
+	Name string `yaml:"-"` // Derived from filename
 	// Description is a markdown-formatted description of the repository (GitHub-flavored markdown)
-	Description              string                  `yaml:"description,omitempty"`
+	Description string `yaml:"description,omitempty"`
 	// Icon is the name of an icon from simpleicons.org (e.g., "immich") or empty to try repository name
 	// Can be overridden in global config.yaml web.icon_urls to use custom URL
-	Icon                     string                  `yaml:"icon,omitempty"`
+	Icon                     string `yaml:"icon,omitempty"`
 	common.RepositoryOptions `yaml:",inline"`
-	Verification             VerificationConfig      `yaml:"verification,omitempty"`
-	Feeds                    []*feed.FeedOptions     `yaml:"feeds"`
+	Verification             VerificationConfig  `yaml:"verification,omitempty"`
+	Feeds                    []*feed.FeedOptions `yaml:"feeds"`
 }
 
 // VerificationConfig contains package verification settings

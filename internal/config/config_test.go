@@ -414,7 +414,6 @@ func TestConfig_defaults(t *testing.T) {
 	}
 }
 
-
 func TestLoadRepositories(t *testing.T) {
 	t.Run("returns error when repos dir doesn't exist", func(t *testing.T) {
 		cfg := &Config{
