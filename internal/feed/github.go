@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -200,7 +201,12 @@ func (s *Github) processChangesFile(ctx context.Context, changesAsset *github.Re
 	// Download .changes file if not already present
 	// Use GitHub's digest for the .changes file itself
 	algo, hash := ParseGitHubDigest(changesAsset.GetDigest())
-	changesPath, err := s.storage.FileExistsOrDownload(ctx, algo, hash, changesAsset.GetBrowserDownloadURL(), tag, changesAsset.GetName())
+	changesURL, err := getDecodedBrowserDownloadURL(changesAsset)
+	if err != nil {
+		return err
+	}
+
+	changesPath, err := s.storage.FileExistsOrDownload(ctx, algo, hash, changesURL, tag, changesAsset.GetName())
 	if err != nil {
 		return err
 	}
@@ -276,12 +282,17 @@ func (s *Github) processKeptChangesFile(ctx context.Context, changes *deb.Change
 					return err
 				}
 
-				assetURL := asset.GetBrowserDownloadURL()
+				assetURL, err := getDecodedBrowserDownloadURL(asset)
+				if err != nil {
+					return err
+				}
+
 				downloadURL := s.options.DownloadURL.String() + "/"
 
 				if !strings.HasPrefix(assetURL, downloadURL) {
 					return fmt.Errorf("asset URL %q does not start with expected download URL %q", assetURL, downloadURL)
 				}
+
 				relPath := strings.TrimPrefix(assetURL, downloadURL)
 				fileResults[idx] = []*common.FileForTrust{{
 					Path:         refFile,
@@ -316,7 +327,12 @@ func (s *Github) processPackageFileNoChanges(ctx context.Context, asset *github.
 
 	// Download package file using GitHub digest
 	algo, hash := ParseGitHubDigest(asset.GetDigest())
-	filePath, err := s.storage.FileExistsOrDownload(ctx, algo, hash, asset.GetBrowserDownloadURL(), tag, assetName)
+	assetURL, err := getDecodedBrowserDownloadURL(asset)
+	if err != nil {
+		return err
+	}
+
+	filePath, err := s.storage.FileExistsOrDownload(ctx, algo, hash, assetURL, tag, assetName)
 	if err != nil {
 		return err
 	}
@@ -357,7 +373,11 @@ func (s *Github) processKeptBinaryPackageNoChanges(ctx context.Context, pkgData 
 	_, hash := ParseGitHubDigest(asset.GetDigest())
 
 	// Prepare redirect path
-	assetURL := asset.GetBrowserDownloadURL()
+	assetURL, err := getDecodedBrowserDownloadURL(asset)
+	if err != nil {
+		return err
+	}
+
 	downloadURL := s.options.DownloadURL.String() + "/"
 	if !strings.HasPrefix(assetURL, downloadURL) {
 		return fmt.Errorf("asset URL %q does not start with expected download URL %q", assetURL, downloadURL)
@@ -402,7 +422,12 @@ func (s *Github) processDscFile(ctx context.Context, file deb.PackageFile, relea
 
 	// Download .dsc file if not already present
 	// Use checksum from .changes file (Debian chain of trust)
-	dscPath, err := s.storage.FileExistsOrDownload(ctx, "sha256", file.Checksums.SHA256, asset.GetBrowserDownloadURL(), tag, file.Filename)
+	assetURL, err := getDecodedBrowserDownloadURL(asset)
+	if err != nil {
+		return nil, err
+	}
+
+	dscPath, err := s.storage.FileExistsOrDownload(ctx, "sha256", file.Checksums.SHA256, assetURL, tag, file.Filename)
 	if err != nil {
 		return nil, err
 	}
@@ -434,7 +459,10 @@ func (s *Github) processDscFile(ctx context.Context, file deb.PackageFile, relea
 
 	// Add .dsc file to results
 	// Redirect uses original GitHub filename from asset
-	assetURL := asset.GetBrowserDownloadURL()
+	assetURL, err = getDecodedBrowserDownloadURL(asset)
+	if err != nil {
+		return nil, err
+	}
 	downloadURL := s.options.DownloadURL.String() + "/"
 
 	if !strings.HasPrefix(assetURL, downloadURL) {
@@ -474,7 +502,10 @@ func (s *Github) processDscFile(ctx context.Context, file deb.PackageFile, relea
 			if err != nil {
 				return err
 			}
-			assetURL := refAsset.GetBrowserDownloadURL()
+			assetURL, err := getDecodedBrowserDownloadURL(refAsset)
+			if err != nil {
+				return err
+			}
 			downloadURL := s.options.DownloadURL.String() + "/"
 
 			if !strings.HasPrefix(assetURL, downloadURL) {
@@ -506,7 +537,11 @@ func (s *Github) downloadReferencedFileWithAsset(ctx context.Context, file deb.P
 
 	// Download file if not already present
 	// Use checksum from Debian metadata (.changes or .dsc file) to maintain chain of trust
-	filePath, err := s.storage.FileExistsOrDownload(ctx, "sha256", file.Checksums.SHA256, asset.GetBrowserDownloadURL(), tag, file.Filename)
+	assetURL, err := getDecodedBrowserDownloadURL(asset)
+	if err != nil {
+		return "", nil, err
+	}
+	filePath, err := s.storage.FileExistsOrDownload(ctx, "sha256", file.Checksums.SHA256, assetURL, tag, file.Filename)
 	return filePath, asset, err
 }
 
@@ -514,6 +549,14 @@ func (s *Github) downloadReferencedFileWithAsset(ctx context.Context, file deb.P
 // GitHub replaces special chars with dots, keeps alphanumeric, underscore, hyphen, dot, plus
 func NormalizeGithubFilename(name string) string {
 	return githubNormalizeRegex.ReplaceAllString(name, ".")
+}
+
+// getDecodedBrowserDownloadURL returns the browser download URL with URL decoding applied.
+// GitHub's API returns URL-encoded paths (e.g., debian/2026.1.1%2B0-1/file.deb),
+// but we need the decoded form to avoid double-encoding when apt clients fetch files.
+func getDecodedBrowserDownloadURL(asset *github.ReleaseAsset) (string, error) {
+	encodedURL := asset.GetBrowserDownloadURL()
+	return url.PathUnescape(encodedURL)
 }
 
 // ParseGitHubDigest parses GitHub asset digest into algorithm and hash
