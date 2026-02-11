@@ -19,7 +19,7 @@ import (
 
 var (
 	// githubNormalizeRegex matches characters that GitHub doesn't allow in filenames
-	githubNormalizeRegex = regexp.MustCompile(`[^a-zA-Z0-9._-]`)
+	githubNormalizeRegex = regexp.MustCompile(`[^a-zA-Z0-9._+-]`)
 )
 
 // Github handles github release downloads
@@ -511,7 +511,7 @@ func (s *Github) downloadReferencedFileWithAsset(ctx context.Context, file deb.P
 }
 
 // NormalizeGithubFilename converts Debian filename to GitHub's normalized form
-// GitHub replaces special chars with dots, keeps alphanumeric, underscore, hyphen, dot
+// GitHub replaces special chars with dots, keeps alphanumeric, underscore, hyphen, dot, plus
 func NormalizeGithubFilename(name string) string {
 	return githubNormalizeRegex.ReplaceAllString(name, ".")
 }
