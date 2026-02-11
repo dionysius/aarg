@@ -112,4 +112,4 @@ feeds:
     # Filter packages by their source package name (empty = all, supports shell-style glob patterns, negation via ! prefix)
     # from_sources: ["*", "!some-other-source"]
     # Filter packages by their package name (empty = all, supports shell-style glob patterns, negation via ! prefix)
-    # by_packages: ["*", "!some-other-package"]
+    # packages: ["*", "!some-other-package"]
