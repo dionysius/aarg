@@ -800,11 +800,11 @@ func (w *Web) BuildTailwindCSS(ctx context.Context) error {
 	defer os.Remove(inputCSS)
 
 	// Create Tailwind CLI and build CSS
-	// Pass Downloads directory as cwd so @source paths resolve correctly
 	// Store Tailwind binary in assets subdirectory of downloads
+	// Use staging directory as cwd to scope Tailwind operations to the current build
 	assetsDir := filepath.Join(w.options.Downloads, assetCacheDir)
 	tailwind := NewTailwindCLI(w.downloader, w.githubClient, assetsDir, w.options.TailwindRelease)
-	if err := tailwind.Build(ctx, inputCSS, outputCSS, w.options.Downloads); err != nil {
+	if err := tailwind.Build(ctx, inputCSS, outputCSS, w.options.Target); err != nil {
 		return fmt.Errorf("building CSS: %w", err)
 	}
 
