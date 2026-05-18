@@ -34,6 +34,7 @@ type DirectoriesConfig struct {
 	Repositories string `yaml:"repositories"` // Relative to config dir if not absolute
 	Downloads    string `yaml:"downloads"`    // Relative to Root if not absolute
 	Trusted      string `yaml:"trusted"`      // Relative to Root if not absolute
+	Cache        string `yaml:"cache"`        // Relative to Root if not absolute, stores parsed file cache
 	Staging      string `yaml:"staging"`      // Relative to Root if not absolute, contains timestamped build directories
 	Public       string `yaml:"public"`       // Relative to Root if not absolute
 }
@@ -52,6 +53,14 @@ func (d *DirectoriesConfig) GetTrustedPath() string {
 		return d.Trusted
 	}
 	return filepath.Join(d.Root, d.Trusted)
+}
+
+// GetCachePath returns the absolute path to the cache directory
+func (d *DirectoriesConfig) GetCachePath() string {
+	if filepath.IsAbs(d.Cache) {
+		return d.Cache
+	}
+	return filepath.Join(d.Root, d.Cache)
 }
 
 // GetStagingPath returns the absolute path to the staging directory
@@ -231,6 +240,9 @@ func (c *Config) defaults() {
 	}
 	if c.Directories.Trusted == "" {
 		c.Directories.Trusted = "trusted"
+	}
+	if c.Directories.Cache == "" {
+		c.Directories.Cache = "cache"
 	}
 	if c.Directories.Staging == "" {
 		c.Directories.Staging = "staging"

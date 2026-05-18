@@ -28,6 +28,9 @@ type AptComposeOptions struct {
 	// Trusted is the path to the trusted directory containing verified packages
 	Trusted string
 
+	// Cache is the path to the cache directory for parsed file data
+	Cache string
+
 	// PoolMode is the pool organization mode: "hierarchical" or "redirect"
 	PoolMode string
 }

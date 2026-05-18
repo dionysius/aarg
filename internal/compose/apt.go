@@ -17,6 +17,7 @@ import (
 	"github.com/aptly-dev/aptly/pgp"
 	"github.com/aptly-dev/aptly/utils"
 	"github.com/dionysius/aarg/debext"
+	"github.com/dionysius/aarg/internal/cache"
 	"github.com/dionysius/aarg/internal/common"
 	"github.com/dionysius/aarg/internal/feed"
 	"gopkg.in/yaml.v3"
@@ -31,6 +32,7 @@ type Apt struct {
 	decompressor *common.DeCompressor                            // Decompressor for package files
 	pool         pond.Pool                                       // Coordination pool for parallel operations
 	redirectMaps map[string]map[string]string                    // Redirect maps per feed (feedRelPath -> map[relPath]redirect), immutable after loading
+	cache        *cache.Cache                                    // Optional cache for parsed file data
 }
 
 // NewApt creates a new Apt composer
@@ -43,6 +45,7 @@ func NewApt(options *AptComposeOptions, verifier *debext.Verifier, signer pgp.Si
 		decompressor: decompressor,
 		pool:         pool,
 		redirectMaps: make(map[string]map[string]string),
+		cache:        cache.New(options.Trusted, options.Cache),
 	}
 }
 
@@ -532,7 +535,6 @@ func (a *Apt) processFeedPackageFile(feedOpts *feed.FeedOptions, relPath string,
 // parseFile parses a package file into a deb.Package
 // relPath is relative to TrustedDir and is stored in package metadata
 func (a *Apt) parseFile(relPath string) (*deb.Package, error) {
-	absPath := filepath.Join(a.options.Trusted, relPath)
 	filename := filepath.Base(relPath)
 	ext := strings.ToLower(filepath.Ext(relPath))
 
@@ -543,7 +545,7 @@ func (a *Apt) parseFile(relPath string) (*deb.Package, error) {
 
 	// Parse binary packages
 	if ext == ".deb" || ext == ".ddeb" {
-		return debext.ParseBinary(absPath, filepath.Dir(relPath))
+		return a.cache.ParseBinary(relPath)
 	}
 
 	// Parse source packages
@@ -552,30 +554,7 @@ func (a *Apt) parseFile(relPath string) (*deb.Package, error) {
 			return nil, nil
 		}
 
-		// Parse .dsc file
-		// Files in trusted storage were already verified during fetch
-		pkg, err := debext.ParseSource(absPath, a.verifier, filepath.Dir(relPath))
-		if err != nil {
-			return nil, err
-		}
-
-		// Calculate complete checksums for all files (including SHA512)
-		// Original .dsc may only contain MD5, SHA1, SHA256
-		completeFiles := make([]deb.PackageFile, 0, len(pkg.Files()))
-		for _, file := range pkg.Files() {
-			filePath := filepath.Join(a.options.Trusted, pkg.Stanza()["Directory"], file.Filename)
-			checksums, err := utils.ChecksumsForFile(filePath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to calculate checksums for %s: %w", filePath, err)
-			}
-			completeFiles = append(completeFiles, deb.PackageFile{
-				Filename:  file.Filename,
-				Checksums: checksums,
-			})
-		}
-		pkg.UpdateFiles(completeFiles)
-
-		return pkg, nil
+		return a.cache.ParseSource(relPath, a.verifier)
 	}
 
 	return nil, nil
