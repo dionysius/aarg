@@ -201,6 +201,9 @@ func (s *Github) processChangesFile(ctx context.Context, changesAsset *github.Re
 	// Download .changes file if not already present
 	// Use GitHub's digest for the .changes file itself
 	algo, hash := ParseGitHubDigest(changesAsset.GetDigest())
+	if hash == "" && !s.options.AllowMissingDigest {
+		return nil
+	}
 	changesURL, err := getDecodedBrowserDownloadURL(changesAsset)
 	if err != nil {
 		return err
@@ -327,6 +330,10 @@ func (s *Github) processPackageFileNoChanges(ctx context.Context, asset *github.
 
 	// Download package file using GitHub digest
 	algo, hash := ParseGitHubDigest(asset.GetDigest())
+	if hash == "" && !s.options.AllowMissingDigest {
+		return nil
+	}
+
 	assetURL, err := getDecodedBrowserDownloadURL(asset)
 	if err != nil {
 		return err
@@ -565,8 +572,8 @@ func ParseGitHubDigest(digest string) (string, string) {
 	if digest == "" {
 		return "", ""
 	}
-	if idx := strings.Index(digest, ":"); idx >= 0 {
-		return digest[:idx], digest[idx+1:]
+	if before, after, ok := strings.Cut(digest, ":"); ok {
+		return before, after
 	}
 	// Assume sha256 if no prefix
 	return "sha256", digest

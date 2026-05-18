@@ -58,9 +58,10 @@ type FeedOptions struct {
 	RelativePath string   // Relative path for downloads and trusted directory
 
 	// GitHub-specific
-	Releases  []ReleaseType // Release types to include
-	Tags      []string      // Tag name filters (glob patterns, ! prefix for negation)
-	NoChanges bool          // Skip .changes files and directly download package files (requires dist mapping)
+	Releases           []ReleaseType // Release types to include
+	Tags               []string      // Tag name filters (glob patterns, ! prefix for negation)
+	NoChanges          bool          // Skip .changes files and directly download package files (requires dist mapping)
+	AllowMissingDigest bool          // Allow downloading assets that have no GitHub-provided digest (skipped by default)
 
 	// Common to all feeds
 	Distributions []DistributionMap // Distribution mappings from feed to target repository
@@ -136,16 +137,17 @@ func validateURLScheme(u *url.URL, originalURL string) error {
 func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 	// Create auxiliary struct with all fields as pointers/slices to detect what's set
 	type feedOptionsAlias struct {
-		GitHub        *string           `yaml:"github"`
-		APT           *string           `yaml:"apt"`
-		OBS           *string           `yaml:"obs"`
-		Releases      []ReleaseType     `yaml:"releases"`
-		Tags          []string          `yaml:"tags"`
-		NoChanges     bool              `yaml:"no_changes"`
-		Components    []string          `yaml:"components"`
-		Distributions []DistributionMap `yaml:"distributions"`
-		FromSources   []string          `yaml:"from_sources"`
-		Packages      []string          `yaml:"packages"`
+		GitHub             *string           `yaml:"github"`
+		APT                *string           `yaml:"apt"`
+		OBS                *string           `yaml:"obs"`
+		Releases           []ReleaseType     `yaml:"releases"`
+		Tags               []string          `yaml:"tags"`
+		NoChanges          bool              `yaml:"no_changes"`
+		AllowMissingDigest bool              `yaml:"allow_missing_digest"`
+		Components         []string          `yaml:"components"`
+		Distributions      []DistributionMap `yaml:"distributions"`
+		FromSources        []string          `yaml:"from_sources"`
+		Packages           []string          `yaml:"packages"`
 	}
 
 	var aux feedOptionsAlias
@@ -222,6 +224,7 @@ func (f *FeedOptions) UnmarshalYAML(node *yaml.Node) (err error) {
 	f.Releases = aux.Releases
 	f.Tags = aux.Tags
 	f.NoChanges = aux.NoChanges
+	f.AllowMissingDigest = aux.AllowMissingDigest
 	f.Distributions = aux.Distributions
 	f.FromSources = aux.FromSources
 	f.Packages = aux.Packages
@@ -272,6 +275,9 @@ func (f FeedOptions) MarshalYAML() (any, error) {
 	}
 	if f.NoChanges {
 		output["no_changes"] = true
+	}
+	if f.AllowMissingDigest {
+		output["allow_missing_digest"] = true
 	}
 
 	return output, nil
