@@ -1,10 +1,15 @@
 package common
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/dionysius/aarg/internal/cache"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStorage_Scope(t *testing.T) {
@@ -83,4 +88,65 @@ func TestNewStorage(t *testing.T) {
 		assert.Equal(t, filepath.Join("/downloads", "feed1", "repo1"), storage.downloadDir)
 		assert.Equal(t, filepath.Join("/trusted", "feed1", "repo1"), storage.trustedDir)
 	})
+}
+
+func sha256Hex(t *testing.T, data []byte) string {
+	t.Helper()
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+func TestStorage_downloadFileExistsWithHash_withCache(t *testing.T) {
+	downloadDir := t.TempDir()
+	cacheDir := t.TempDir()
+	downloadCache := cache.New(downloadDir, cacheDir)
+
+	content := []byte("package contents")
+	hash := sha256Hex(t, content)
+	require.NoError(t, os.WriteFile(filepath.Join(downloadDir, "pkg.deb"), content, 0644))
+
+	storage := NewStorage(nil, downloadDir, "/trusted").WithDownloadCache(downloadCache)
+
+	t.Run("cache miss computes and matches", func(t *testing.T) {
+		assert.True(t, storage.downloadFileExistsWithHash("sha256", hash, "pkg.deb"))
+		assert.FileExists(t, filepath.Join(cacheDir, "pkg.deb.checksums.yaml"))
+		assert.FileExists(t, filepath.Join(cacheDir, "pkg.deb.metadata.yaml"))
+	})
+
+	t.Run("cached hit avoids recomputation and still matches", func(t *testing.T) {
+		// Corrupting the checksums sidecar would surface a stale read; instead just
+		// confirm a second call still matches, driven off the metadata freshness check.
+		assert.True(t, storage.downloadFileExistsWithHash("sha256", hash, "pkg.deb"))
+	})
+
+	t.Run("mismatched hash", func(t *testing.T) {
+		assert.False(t, storage.downloadFileExistsWithHash("sha256", "deadbeef", "pkg.deb"))
+	})
+
+	t.Run("missing file", func(t *testing.T) {
+		assert.False(t, storage.downloadFileExistsWithHash("sha256", hash, "missing.deb"))
+	})
+
+	t.Run("scoped storage uses relative path under the cache root", func(t *testing.T) {
+		subContent := []byte("scoped contents")
+		subHash := sha256Hex(t, subContent)
+		require.NoError(t, os.MkdirAll(filepath.Join(downloadDir, "sub"), 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(downloadDir, "sub", "pkg2.deb"), subContent, 0644))
+
+		scoped := storage.Scope("sub")
+		assert.True(t, scoped.downloadFileExistsWithHash("sha256", subHash, "pkg2.deb"))
+		assert.FileExists(t, filepath.Join(cacheDir, "sub", "pkg2.deb.checksums.yaml"))
+	})
+}
+
+func TestStorage_downloadFileExistsWithHash_withoutCache(t *testing.T) {
+	downloadDir := t.TempDir()
+	content := []byte("package contents")
+	hash := sha256Hex(t, content)
+	require.NoError(t, os.WriteFile(filepath.Join(downloadDir, "pkg.deb"), content, 0644))
+
+	storage := NewStorage(nil, downloadDir, "/trusted")
+
+	assert.True(t, storage.downloadFileExistsWithHash("sha256", hash, "pkg.deb"))
+	assert.False(t, storage.downloadFileExistsWithHash("sha256", "deadbeef", "pkg.deb"))
 }

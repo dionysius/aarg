@@ -70,7 +70,7 @@ func (a *Application) Fetch(ctx context.Context, repoNames []string) error {
 						a.Config.Directories.GetDownloadsPath(),
 						a.Config.Directories.GetTrustedPath(),
 						feedOpt.RelativePath,
-					)
+					).WithDownloadCache(a.DownloadCache)
 
 					// Create feed instance based on type (after expansion, OBS becomes APT)
 					var feedInst feed.Feed

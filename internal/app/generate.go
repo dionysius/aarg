@@ -131,7 +131,7 @@ func (a *Application) generateRepository(ctx context.Context, repo *config.Repos
 		},
 		Repository: &repo.RepositoryOptions,
 		Trusted:    a.Config.Directories.GetTrustedPath(),
-		Cache:      a.Config.Directories.GetCachePath(),
+		Cache:      a.Config.Directories.GetTrustedCachePath(),
 		PoolMode:   a.Config.Generate.PoolMode,
 	}
 
