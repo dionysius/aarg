@@ -1,11 +1,13 @@
-// Package cache provides a lazily-populated, file-level cache for parsed package data.
+// Package cache provides a lazily-populated, file-level cache for parsed package data
+// and file checksums.
 //
 // Cache files are stored under a cache directory that mirrors the structure of the
-// trusted directory. For each cached source file the following sidecar files may exist:
+// directory it is rooted at (e.g. the trusted or downloads directory). For each cached
+// source file the following sidecar files may exist:
 //
 //   - <relpath>.metadata.yaml  — inode, size and mtime_ns used for freshness checks
 //   - <relpath>.checksums.yaml — MD5, SHA1, SHA256, SHA512 of the file
-//   - <relpath>.control        — YAML-serialised control stanza (binary packages only)
+//   - <relpath>.control        — YAML-serialised control stanza (binary packages only, trusted root only)
 //
 // Freshness is determined entirely by comparing the stored inode, size and mtime_ns
 // against a single os.Stat call — no file content is re-read just to validate the cache.
@@ -40,16 +42,16 @@ type FileChecksums struct {
 }
 
 // Cache provides a lazily-populated, file-level cache rooted at cacheDir that mirrors
-// the structure of trustedDir.
+// the structure of rootDir.
 type Cache struct {
-	trustedDir string
-	cacheDir   string
+	rootDir  string
+	cacheDir string
 }
 
-// New returns a Cache that mirrors trustedDir under cacheDir.
+// New returns a Cache that mirrors rootDir under cacheDir.
 // Returns nil if cacheDir is empty.
-func New(trustedDir, cacheDir string) *Cache {
-	return &Cache{trustedDir: trustedDir, cacheDir: cacheDir}
+func New(rootDir, cacheDir string) *Cache {
+	return &Cache{rootDir: rootDir, cacheDir: cacheDir}
 }
 
 // cacheBasePath returns the base path (without sidecar extension) for relPath.
@@ -117,10 +119,10 @@ func writeMetadata(absPath, base string, stat os.FileInfo) error {
 	return writeAtomic(base+".metadata.yaml", data)
 }
 
-// GetChecksums returns checksums for relPath (relative to trustedDir), loading from cache
+// GetChecksums returns checksums for relPath (relative to the cache root), loading from cache
 // when fresh or computing and writing the cache on a miss.
 func (c *Cache) GetChecksums(relPath string) (utils.ChecksumInfo, error) {
-	absPath := filepath.Join(c.trustedDir, relPath)
+	absPath := filepath.Join(c.rootDir, relPath)
 	base, err := c.cacheBasePath(relPath)
 	if err != nil {
 		return utils.ChecksumInfo{}, err
@@ -195,10 +197,10 @@ func storeChecksums(base string, info utils.ChecksumInfo) error {
 }
 
 // GetBinaryControl returns the cached control stanza for a .deb file, or nil if not cached.
-// relPath is relative to trustedDir. The returned stanza contains pure control fields only —
+// relPath is relative to the cache root. The returned stanza contains pure control fields only —
 // without Filename, Size or checksum fields, which are added by ParseBinary.
 func (c *Cache) GetBinaryControl(relPath string) (deb.Stanza, error) {
-	absPath := filepath.Join(c.trustedDir, relPath)
+	absPath := filepath.Join(c.rootDir, relPath)
 	base, err := c.cacheBasePath(relPath)
 	if err != nil {
 		return nil, err
@@ -231,7 +233,7 @@ func (c *Cache) GetBinaryControl(relPath string) (deb.Stanza, error) {
 }
 
 // StoreBinaryControl writes the control stanza cache for a .deb file.
-// relPath is relative to trustedDir. Errors are non-fatal; callers may log or ignore them.
+// relPath is relative to the cache root. Errors are non-fatal; callers may log or ignore them.
 // The metadata.yaml is written by GetChecksums; StoreBinaryControl only writes .control.
 func (c *Cache) StoreBinaryControl(relPath string, stanza deb.Stanza) error {
 	base, err := c.cacheBasePath(relPath)
@@ -251,11 +253,11 @@ func (c *Cache) StoreBinaryControl(relPath string, stanza deb.Stanza) error {
 	return writeAtomic(base+".control", data)
 }
 
-// ParseBinary parses a .deb or .ddeb file at relPath (relative to trustedDir) using cached
+// ParseBinary parses a .deb or .ddeb file at relPath (relative to the cache root) using cached
 // control data and checksums. On a cache miss the control data is extracted from the archive
 // and stored for future runs.
 func (c *Cache) ParseBinary(relPath string) (*deb.Package, error) {
-	absPath := filepath.Join(c.trustedDir, relPath)
+	absPath := filepath.Join(c.rootDir, relPath)
 
 	stanza, err := c.GetBinaryControl(relPath)
 	if err != nil {
@@ -288,13 +290,13 @@ func (c *Cache) ParseBinary(relPath string) (*deb.Package, error) {
 	return deb.NewPackageFromControlFile(stanza), nil
 }
 
-// ParseSource parses a .dsc file at relPath (relative to trustedDir) and returns a source
+// ParseSource parses a .dsc file at relPath (relative to the cache root) and returns a source
 // package with complete checksums for all referenced files.
 // The .dsc is parsed and its signature verified on every call (the file is tiny).
 // Checksums for the larger referenced source files (.orig.tar.*, .debian.tar.*, etc.) are
 // obtained from the cache or computed on first encounter and cached for subsequent runs.
 func (c *Cache) ParseSource(relPath string, verifier *debext.Verifier) (*deb.Package, error) {
-	absPath := filepath.Join(c.trustedDir, relPath)
+	absPath := filepath.Join(c.rootDir, relPath)
 
 	pkg, err := debext.ParseSource(absPath, verifier, filepath.Dir(relPath))
 	if err != nil {

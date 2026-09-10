@@ -138,6 +138,16 @@ func TestDirectoriesConfig_GetPublicPath(t *testing.T) {
 	}
 }
 
+func TestDirectoriesConfig_GetTrustedCachePath(t *testing.T) {
+	d := &DirectoriesConfig{Root: "/var/lib/aarg", Cache: "cache"}
+	assert.Equal(t, "/var/lib/aarg/cache/trusted", d.GetTrustedCachePath())
+}
+
+func TestDirectoriesConfig_GetDownloadsCachePath(t *testing.T) {
+	d := &DirectoriesConfig{Root: "/var/lib/aarg", Cache: "cache"}
+	assert.Equal(t, "/var/lib/aarg/cache/downloads", d.GetDownloadsCachePath())
+}
+
 func TestSigningConfig_GetPrivateKeyPath(t *testing.T) {
 	tests := []struct {
 		name       string

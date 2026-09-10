@@ -14,6 +14,7 @@ import (
 	"github.com/alitto/pond/v2"
 	"github.com/aptly-dev/aptly/pgp"
 	"github.com/dionysius/aarg/debext"
+	"github.com/dionysius/aarg/internal/cache"
 	"github.com/dionysius/aarg/internal/common"
 	"github.com/dionysius/aarg/internal/config"
 	"github.com/google/go-github/v80/github"
@@ -28,6 +29,7 @@ type Application struct {
 	Downloader         *common.Downloader
 	DeCompressor       *common.DeCompressor
 	Storage            *common.Storage
+	DownloadCache      *cache.Cache
 	GitHubClient       *github.Client
 	HTTPClient         *http.Client
 	Signer             pgp.Signer
@@ -90,7 +92,8 @@ func New(ctx context.Context, cfg *config.Config) (*Application, error) {
 	downloader := common.NewDownloader(downloadPool, httpClient, decompressor)
 
 	// Initialize storage (using resolved absolute paths from config)
-	storage := common.NewStorage(downloader, dirs.GetDownloadsPath(), dirs.GetTrustedPath())
+	downloadCache := cache.New(dirs.GetDownloadsPath(), dirs.GetDownloadsCachePath())
+	storage := common.NewStorage(downloader, dirs.GetDownloadsPath(), dirs.GetTrustedPath()).WithDownloadCache(downloadCache)
 
 	// Initialize GitHub client (if token is configured)
 	var githubClient *github.Client
@@ -114,6 +117,7 @@ func New(ctx context.Context, cfg *config.Config) (*Application, error) {
 		Downloader:         downloader,
 		DeCompressor:       decompressor,
 		Storage:            storage,
+		DownloadCache:      downloadCache,
 		GitHubClient:       githubClient,
 		HTTPClient:         httpClient,
 		Signer:             signer,

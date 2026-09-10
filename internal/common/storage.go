@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/alitto/pond/v2"
+	"github.com/dionysius/aarg/internal/cache"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,10 +29,12 @@ type FileForTrust struct {
 
 // Storage handles file storage and downloads in downloads/, trusted/, and public/ directories
 type Storage struct {
-	downloadDir   string
-	trustedDir    string
-	downloader    *Downloader
-	redirectMapMu sync.Mutex // Protects redirects.yaml read-modify-write operations
+	downloadDir     string
+	trustedDir      string
+	downloadRelPath string // path from the download cache root; kept in sync with downloadDir through Scope
+	downloader      *Downloader
+	downloadCache   *cache.Cache // optional: checksum cache for the downloads tree, avoids re-hashing unchanged files
+	redirectMapMu   sync.Mutex   // Protects redirects.yaml read-modify-write operations
 }
 
 // NewStorage creates a new storage manager
@@ -42,19 +45,29 @@ func NewStorage(downloader *Downloader, downloadDir, trustedDir string, pathPart
 	scopedTrustedDir := filepath.Join(append([]string{trustedDir}, pathParts...)...)
 
 	return &Storage{
-		downloadDir: scopedDownloadDir,
-		trustedDir:  scopedTrustedDir,
-		downloader:  downloader,
+		downloadDir:     scopedDownloadDir,
+		trustedDir:      scopedTrustedDir,
+		downloadRelPath: filepath.Join(pathParts...),
+		downloader:      downloader,
 	}
+}
+
+// WithDownloadCache attaches a checksum cache rooted at the same directory as downloadDir.
+// Returns the receiver for chaining.
+func (m *Storage) WithDownloadCache(c *cache.Cache) *Storage {
+	m.downloadCache = c
+	return m
 }
 
 // Scope creates a new Storage instance scoped to additional path parts
 func (m *Storage) Scope(pathParts ...string) *Storage {
 	// Append path parts to current directories
 	return &Storage{
-		downloadDir: filepath.Join(append([]string{m.downloadDir}, pathParts...)...),
-		trustedDir:  filepath.Join(append([]string{m.trustedDir}, pathParts...)...),
-		downloader:  m.downloader,
+		downloadDir:     filepath.Join(append([]string{m.downloadDir}, pathParts...)...),
+		trustedDir:      filepath.Join(append([]string{m.trustedDir}, pathParts...)...),
+		downloadRelPath: filepath.Join(append([]string{m.downloadRelPath}, pathParts...)...),
+		downloader:      m.downloader,
+		downloadCache:   m.downloadCache,
 	}
 }
 
@@ -150,9 +163,19 @@ func fileExistsWithHash(path, hashMethod, expectedHash string) bool {
 	return strings.EqualFold(actualHash, expectedHash)
 }
 
-// downloadFileExistsWithHash checks if a file exists in downloads folder with expected hash
+// downloadFileExistsWithHash checks if a file exists in downloads folder with expected hash.
+// When a download cache is attached, freshness is checked via inode/size/mtime instead of
+// re-hashing the file from disk on every call.
 func (m *Storage) downloadFileExistsWithHash(hashMethod, expectedHash string, pathParts ...string) bool {
-	exists := fileExistsWithHash(m.GetDownloadPath(pathParts...), hashMethod, expectedHash)
+	var exists bool
+
+	if expectedHash != "" && hashMethod == "sha256" && m.downloadCache != nil {
+		relPath := filepath.Join(append([]string{m.downloadRelPath}, pathParts...)...)
+		checksums, err := m.downloadCache.GetChecksums(relPath)
+		exists = err == nil && strings.EqualFold(checksums.SHA256, expectedHash)
+	} else {
+		exists = fileExistsWithHash(m.GetDownloadPath(pathParts...), hashMethod, expectedHash)
+	}
 
 	if exists {
 		slog.Debug("Match exists, download skipped", "file", filepath.Join(pathParts...), "sha256", expectedHash)

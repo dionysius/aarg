@@ -63,6 +63,16 @@ func (d *DirectoriesConfig) GetCachePath() string {
 	return filepath.Join(d.Root, d.Cache)
 }
 
+// GetTrustedCachePath returns the absolute path to the cache subtree mirroring the trusted directory
+func (d *DirectoriesConfig) GetTrustedCachePath() string {
+	return filepath.Join(d.GetCachePath(), "trusted")
+}
+
+// GetDownloadsCachePath returns the absolute path to the cache subtree mirroring the downloads directory
+func (d *DirectoriesConfig) GetDownloadsCachePath() string {
+	return filepath.Join(d.GetCachePath(), "downloads")
+}
+
 // GetStagingPath returns the absolute path to the staging directory
 func (d *DirectoriesConfig) GetStagingPath() string {
 	if filepath.IsAbs(d.Staging) {
