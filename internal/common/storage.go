@@ -27,6 +27,12 @@ type FileForTrust struct {
 	Redirect     string // Relative redirect suffix (original file source) relative to the feed base URL
 }
 
+// redirectFileMu serializes read-modify-write access to redirects.yaml across all Storage
+// instances. Multiple distinct Storage structs (e.g. one per expanded distribution of the same
+// feed) commonly share the same trustedDir and thus the same file, so the lock must be
+// process-wide rather than a per-instance field.
+var redirectFileMu sync.Mutex
+
 // Storage handles file storage and downloads in downloads/, trusted/, and public/ directories
 type Storage struct {
 	downloadDir     string
@@ -34,7 +40,6 @@ type Storage struct {
 	downloadRelPath string // path from the download cache root; kept in sync with downloadDir through Scope
 	downloader      *Downloader
 	downloadCache   *cache.Cache // optional: checksum cache for the downloads tree, avoids re-hashing unchanged files
-	redirectMapMu   sync.Mutex   // Protects redirects.yaml read-modify-write operations
 }
 
 // NewStorage creates a new storage manager
@@ -267,8 +272,8 @@ func (m *Storage) UncompressedFileExistsOrDownloadAndDecompress(ctx context.Cont
 // Merges with existing redirects to support incremental updates.
 func (m *Storage) writeRedirectMap(redirects map[string]string) error {
 	// Protect read-modify-write with mutex to prevent concurrent updates
-	m.redirectMapMu.Lock()
-	defer m.redirectMapMu.Unlock()
+	redirectFileMu.Lock()
+	defer redirectFileMu.Unlock()
 
 	mapFile := filepath.Join(m.trustedDir, "redirects.yaml")
 

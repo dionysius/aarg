@@ -1,15 +1,19 @@
 package common
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/dionysius/aarg/internal/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestStorage_Scope(t *testing.T) {
@@ -149,4 +153,100 @@ func TestStorage_downloadFileExistsWithHash_withoutCache(t *testing.T) {
 
 	assert.True(t, storage.downloadFileExistsWithHash("sha256", hash, "pkg.deb"))
 	assert.False(t, storage.downloadFileExistsWithHash("sha256", "deadbeef", "pkg.deb"))
+}
+
+// readRedirectMap reads and unmarshals a feed's redirects.yaml, failing the test if it doesn't
+// parse (which is exactly how a torn concurrent write surfaces: duplicate mapping keys).
+func readRedirectMap(t *testing.T, trustedDir string) map[string]string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(trustedDir, "redirects.yaml"))
+	require.NoError(t, err)
+
+	var m map[string]string
+	require.NoError(t, yaml.Unmarshal(data, &m), "redirects.yaml did not parse")
+	return m
+}
+
+func TestStorage_LinkFilesToTrusted_redirectMapMerges(t *testing.T) {
+	downloadDir := t.TempDir()
+	trustedDir := t.TempDir()
+	srcPath := filepath.Join(downloadDir, "pkg.deb")
+	require.NoError(t, os.WriteFile(srcPath, []byte("contents"), 0644))
+
+	storage := NewStorage(nil, downloadDir, trustedDir)
+
+	require.NoError(t, storage.LinkFilesToTrusted(context.Background(), []*FileForTrust{
+		{Path: srcPath, Distribution: "noble", Source: "pkg-a", Hash: "hash-a", Redirect: "redirect-a"},
+		{Path: srcPath, Distribution: "noble", Source: "pkg-b", Hash: "hash-b", Redirect: "redirect-b"},
+	}))
+
+	redirects := readRedirectMap(t, trustedDir)
+	assert.Equal(t, map[string]string{
+		filepath.Join("noble", "pkg-a", "pkg.deb"): "redirect-a",
+		filepath.Join("noble", "pkg-b", "pkg.deb"): "redirect-b",
+	}, redirects)
+
+	// A second, later call must merge in rather than clobber the first batch.
+	require.NoError(t, storage.LinkFilesToTrusted(context.Background(), []*FileForTrust{
+		{Path: srcPath, Distribution: "noble", Source: "pkg-c", Hash: "hash-c", Redirect: "redirect-c"},
+	}))
+
+	redirects = readRedirectMap(t, trustedDir)
+	assert.Equal(t, map[string]string{
+		filepath.Join("noble", "pkg-a", "pkg.deb"): "redirect-a",
+		filepath.Join("noble", "pkg-b", "pkg.deb"): "redirect-b",
+		filepath.Join("noble", "pkg-c", "pkg.deb"): "redirect-c",
+	}, redirects)
+}
+
+// TestStorage_LinkFilesToTrusted_concurrentStoragesDoNotCorruptRedirectMap is a regression test
+// for a bug where separate *Storage instances that share the same trustedDir (as happens when one
+// apt feed expands into several per-distribution feeds, all writing the same redirects.yaml) each
+// held their own unshared mutex, letting concurrent read-modify-write cycles interleave and
+// corrupt the file with duplicate mapping keys. The fix moved the lock to a package-level
+// redirectFileMu shared by every Storage instance.
+func TestStorage_LinkFilesToTrusted_concurrentStoragesDoNotCorruptRedirectMap(t *testing.T) {
+	downloadDir := t.TempDir()
+	trustedDir := t.TempDir()
+	srcPath := filepath.Join(downloadDir, "pkg.deb")
+	require.NoError(t, os.WriteFile(srcPath, []byte("contents"), 0644))
+
+	const writers = 32
+
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	errs := make([]error, writers)
+
+	for i := range writers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			// Each goroutine builds its own Storage instance, mirroring how fetch.go
+			// constructs a fresh *Storage per expanded (per-distribution) feed.
+			storage := NewStorage(nil, downloadDir, trustedDir)
+			<-start // line up goroutines to maximize overlap
+			errs[i] = storage.LinkFilesToTrusted(context.Background(), []*FileForTrust{
+				{
+					Path:         srcPath,
+					Distribution: "noble",
+					Source:       fmt.Sprintf("pkg-%02d", i),
+					Hash:         fmt.Sprintf("hash-%02d", i),
+					Redirect:     fmt.Sprintf("redirect-%02d", i),
+				},
+			})
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	for i, err := range errs {
+		require.NoErrorf(t, err, "writer %d", i)
+	}
+
+	redirects := readRedirectMap(t, trustedDir)
+	require.Len(t, redirects, writers)
+	for i := range writers {
+		key := filepath.Join("noble", fmt.Sprintf("pkg-%02d", i), "pkg.deb")
+		assert.Equal(t, fmt.Sprintf("redirect-%02d", i), redirects[key])
+	}
 }
